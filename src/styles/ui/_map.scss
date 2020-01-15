@@ -1,0 +1,140 @@
+.mappings {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+#blank-map {
+  display: flex;
+  flex-direction: column;
+  background: var(--box-alt-background-color);
+  color: var(--text-secondary-color);
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing);
+}
+
+.blankmap-image {
+  width: 50%;
+}
+
+.mapping-container {
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: var(--spacing-double);
+
+  .archives-space {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-light);
+    padding-bottom: var(--spacing);
+  }
+
+  .header {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-light);
+    border-bottom: 1px solid var(--box-border-color);
+    padding-bottom: var(--spacing);
+
+    &.row-component:not(:last-child) {
+      margin-bottom: var(--spacing-double);
+    }
+
+    >div {
+      align-self: flex-end;
+    }
+
+    .target,
+    .item {
+      display: inline-block;
+      margin: 0;
+    }
+
+    .target {
+      width: 25%;
+      max-width: 25%;
+      min-width: 25%;
+      margin-right: var(--spacing-half);
+    }
+
+    .item {
+      width: 10%;
+      max-width: 10%;
+      min-width: 10%;
+      text-align: center;
+      margin: 0 var(--spacing-half);
+    }
+
+    .source {
+      width: 65%;
+      max-width: 65%;
+      margin-left: var(--spacing-half);
+    }
+  }
+
+  .row-component:not(:last-child) {
+    margin-bottom: var(--spacing);
+  }
+
+  .select-component {
+    width: 100%;
+
+    label {
+      width: 25%;
+      max-width: 25%;
+      min-width: 25%;
+      display: inline-block;
+      white-space: nowrap;
+      margin-right: var(--spacing-half);
+    }
+
+    .checkbox-component {
+      width: 10%;
+      max-width: 10%;
+      min-width: 10%;
+      display: inline-block;
+      margin: 0;
+      text-align: center;
+      margin: 0 var(--spacing-half);
+    }
+
+    .selects {
+      width: 100%;
+      max-width: 75%;
+      margin-right: var(--spacing);
+      margin-left: var(--spacing-half);
+
+      select {
+        width: 100%;
+      }
+    }
+  }
+
+  .mapping-fields {
+    .required {
+      font-weight: var(--font-weight-bold);
+
+      &:after {
+        content: "Required";
+        font-weight: normal;
+        font-style: italic;
+        color: var(--required-field-color);
+        font-size: var(--font-size-sm);
+        margin-left: var(--spacing);
+      }
+    }
+  }
+
+  .map-select-component {
+    margin-bottom: var(--spacing-third);
+  }
+
+  .buttons {
+    .button-component {
+      display: block;
+      margin-bottom: var(--spacing-third);
+    }
+  }
+}
