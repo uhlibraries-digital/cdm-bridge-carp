@@ -6,22 +6,22 @@
     "name": "Sean Watkins",
     "email": "slwatkins@uh.edu"
   },
-  "homepage": "https://digitalcollections.lib.uh.edu/",
+  "homepage": "https://github.com/uhlibraries-digital/cdm-bridge-carp",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "scripts": {
     "dev": "electron-webpack dev",
     "compile": "electron-webpack",
-    "dist": "yarn compile && electron-builder",
+    "dist": "yarn compile && electron-builder --publish always",
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null",
-    "pack": "yarn compile && electron-builder --dir"
+    "pack": "yarn compile && electron-builder --dir",
+    "release": "yarn compile && build"
   },
   "build": {
     "productName": "CDM Bridge2Carp",
     "appId": "edu.uh.lib.Cdm2Carp",
     "dmg": {
-      "contents": [
-        {
+      "contents": [{
           "x": 130,
           "y": 220
         },
