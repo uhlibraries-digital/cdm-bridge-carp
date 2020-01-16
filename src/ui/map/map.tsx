@@ -48,8 +48,7 @@ export class Map extends React.Component<IMapProps, IMapState> {
       .map(nicks => nicks.filter((nick: string) => nick !== ""))
 
     const usedNicks = usedNicksArray.filter(e => e.length > 0)
-      .map(nick => nick.toString())
-
+      .reduce((acc, val) => acc.concat(val), [])
 
     this.setState({ disabledNicks: usedNicks })
   }
