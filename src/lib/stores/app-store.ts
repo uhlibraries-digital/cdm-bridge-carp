@@ -22,6 +22,7 @@ import {
   CdmCollection,
   CdmFieldInfo
 } from '../contentdm'
+import { electronStore } from './electron-store'
 import { ArchivesSpace, IResource, ArchivesSpaceServer } from '../archivesspace'
 import { Exporter, ExportType } from '../export'
 import { BcdamsMap, BcdamsMapField } from '../map'
@@ -108,13 +109,13 @@ export class AppStore extends TypedBaseStore<IAppState> {
     this.selectedView = ViewType.Collection
 
     this.preferences = JSON.parse(
-      String(localStorage.getItem('preferences'))
+      String(electronStore.get('preferences', 'null'))
     ) as IPreferences
 
     this.collections = []
 
     this.crosswalk = this._convertCrosswalk(JSON.parse(
-      String(localStorage.getItem('crosswalk'))
+      String(electronStore.get('crosswalk', 'null'))
     ) as ICrosswalk)
 
     if (!this.preferences) {
@@ -129,8 +130,9 @@ export class AppStore extends TypedBaseStore<IAppState> {
       this._setArchivesSpaceResources()
     }
 
-    this.sidebarWidth = parseInt(localStorage.getItem('sidebarWidth') || '', 10) ||
-      defaultSidebarWidth
+    this.sidebarWidth = parseInt(
+      String(electronStore.get('sidebarWidth')), 10
+    ) || defaultSidebarWidth
 
     this.emitUpdateNow()
   }
@@ -187,7 +189,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
 
   public _setSidebarWidth(width: number): Promise<void> {
     this.sidebarWidth = width
-    localStorage.setItem('sidebarWidth', width.toString())
+    electronStore.set('sidebarWidth', width.toString())
     this.emitUpdate()
 
     return Promise.resolve()
@@ -195,7 +197,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
 
   public _resetSidebarWidth(): Promise<void> {
     this.sidebarWidth = defaultSidebarWidth
-    localStorage.removeItem('sidebarWidth')
+    electronStore.delete('sidebarWidth')
     this.emitUpdate()
 
     return Promise.resolve()
@@ -223,7 +225,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
     }
     this.crosswalk[alias][field.id].nicks = value
 
-    localStorage.setItem('crosswalk', JSON.stringify(this.crosswalk))
+    electronStore.set('crosswalk', JSON.stringify(this.crosswalk))
     this.emitUpdate()
 
     return Promise.resolve()
@@ -235,7 +237,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
     }
 
     delete this.crosswalk[alias][field.id]
-    localStorage.setItem('crosswalk', JSON.stringify(this.crosswalk))
+    electronStore.set('crosswalk', JSON.stringify(this.crosswalk))
     this.emitUpdate()
 
     return Promise.resolve()
@@ -258,7 +260,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
     }
     this.crosswalk[alias][field.id].itemExport = value
 
-    localStorage.setItem('crosswalk', JSON.stringify(this.crosswalk))
+    electronStore.set('crosswalk', JSON.stringify(this.crosswalk))
     this.emitUpdate()
 
     return Promise.resolve()
@@ -268,7 +270,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
     url: string
   ): Promise<any> {
     this.preferences.mapUrl = url
-    localStorage.setItem('preferences', JSON.stringify(this.preferences))
+    electronStore.set('preferences', JSON.stringify(this.preferences))
 
     this._setMapFields()
 
@@ -287,7 +289,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
     this.preferences.cdm.hostname = hostname
     this.preferences.cdm.port = Number(port)
     this.preferences.cdm.ssl = ssl
-    localStorage.setItem('preferences', JSON.stringify(this.preferences))
+    electronStore.set('preferences', JSON.stringify(this.preferences))
 
     this.collectionFieldInfo = null
     this.selectedAlias = ''
@@ -315,7 +317,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
       password: password
     })
 
-    localStorage.setItem('preferences', JSON.stringify(this.preferences))
+    electronStore.set('preferences', JSON.stringify(this.preferences))
     this.emitUpdate()
 
     await this._setArchivesSpaceServer()
@@ -336,7 +338,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
     })
 
     this.preferences.fields = Array.from(fields)
-    localStorage.setItem('preferences', JSON.stringify(this.preferences))
+    electronStore.set('preferences', JSON.stringify(this.preferences))
 
     return Promise.resolve()
   }
