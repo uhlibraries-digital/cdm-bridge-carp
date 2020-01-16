@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as classNames from 'classnames'
 import { IResource } from '../../lib/archivesspace';
 
-interface ArchviesSpaceResourceProp {
+interface ArchivesSpaceResourceProp {
   readonly resources: ReadonlyArray<IResource>
   readonly selectedResource?: string
   readonly label?: string
@@ -11,7 +11,7 @@ interface ArchviesSpaceResourceProp {
   readonly onResouceChanged: (uri: string) => void
 }
 
-export class ArchviesSpaceResource extends React.Component<ArchviesSpaceResourceProp, {}> {
+export class ArchivesSpaceResource extends React.Component<ArchivesSpaceResourceProp, {}> {
 
   private onChange = (event: React.FormEvent<HTMLSelectElement>) => {
     const value = event.currentTarget.value

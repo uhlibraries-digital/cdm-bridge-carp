@@ -5,7 +5,7 @@ import { MapSelect } from './map-select'
 import { Row } from '../layout'
 import { Dispatcher } from '../../lib/dispatcher'
 import { IField, ICrosswalkFieldHash, ICrosswalkField } from '../../lib/app-state'
-import { ArchviesSpaceResource } from './archives-space-resource'
+import { ArchivesSpaceResource } from './archives-space-resource'
 import { IResource } from '../../lib/archivesspace';
 
 interface IMapProps {
@@ -184,7 +184,7 @@ export class Map extends React.Component<IMapProps, IMapState> {
   private renderArchivesSpaceResouces() {
     return (
       <Row className="archives-space">
-        <ArchviesSpaceResource
+        <ArchivesSpaceResource
           label="ArchivesSpace Collection"
           resources={this.props.resources}
           selectedResource={this.props.selectedResource}
