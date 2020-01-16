@@ -53,7 +53,9 @@ export class ArchivesSpace {
     }
     const today = new Date();
     if (!this.token || this.token.expires <= today.getTime()) {
-      await this._setSessionToken()
+      try {
+        await this._setSessionToken()
+      } catch (err) { throw err }
     }
 
     const options = {
@@ -92,19 +94,24 @@ export class ArchivesSpace {
       form: {
         password: this.server.password
       },
+      resolveWithFullResponse: true,
       json: true
     }
     return rp(options)
       .then((response) => {
+        if (response.statusCode !== 200) {
+          console.error(response)
+          throw new Error(response.statusCode + ': ' + response.error.error)
+        }
         const now = new Date()
         this.token = {
-          session: response.session,
+          session: response.body.session,
           expires: now.getTime()
         }
         return this.token
       })
       .catch((err) => {
-        throw err
+        throw new Error(`ArchviesSpace: ${err.error.error}`)
       })
   }
 

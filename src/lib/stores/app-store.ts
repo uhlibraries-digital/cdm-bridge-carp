@@ -422,8 +422,11 @@ export class AppStore extends TypedBaseStore<IAppState> {
         this.archivesSpaceResources = resources.sort((a: IResource, b: IResource) => {
           return a.title.localeCompare(b.title)
         })
+        this.emitUpdate()
       })
-      .then(() => this.emitUpdate())
+      .catch((err) => {
+        this._pushError(err)
+      })
   }
 
   public async _setArchivesSpaceResource(uri: string): Promise<any> {
