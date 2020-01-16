@@ -20,10 +20,10 @@ export class UpdateAvailable extends React.Component<IUpdateAvailableProps, {}> 
         />
 
         <span>
-          An updated version of Carpenters is available and will be
+          An updated version of CDM Bridge2Carp is available and will be
           installed at the next launch or{' '}
           <LinkButton onClick={this.onUpdateNow}>
-            restart Carpenters now
+            restart CDM Bridge2Carp now
           </LinkButton>.
         </span>
 
