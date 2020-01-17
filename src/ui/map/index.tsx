@@ -1,3 +1,5 @@
 export { MapView } from './map-view'
 export { BlankMap } from './blank-map'
 export { MapSelect } from './map-select'
+export { ArchivesSpaceResource } from './archives-space-resource'
+export { Location } from './location'

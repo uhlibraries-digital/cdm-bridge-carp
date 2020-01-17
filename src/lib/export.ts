@@ -9,21 +9,32 @@ import { csvString } from './csv'
 import {
   writeFile,
   createWriteStream,
-  WriteStream
+  WriteStream,
+  readdirSync,
+  accessSync,
+  constants
 } from 'fs';
-import { basename, dirname } from 'path';
+import { basename, dirname, parse } from 'path';
 import { sync } from 'mkdirp'
 import { v4 } from 'uuid'
 import {
   IProject,
   ProjectType,
   IContainer,
-  createContinerFilesystem
+  createContainerFilesystem,
+  containerToPath,
+  filePostfix,
+  FilePurpose,
+  copyFileToProject,
+  createDirectories,
+  IFile
 } from './carpenters';
 import {
   ArchivesSpace,
   ArchivesSpaceServer
 } from './archivesspace';
+import { padLeft } from './string';
+import * as filesize from 'filesize';
 
 const __DEV__ = process.env.NODE_ENV === 'development'
 
@@ -32,12 +43,25 @@ export enum ExportType {
   Metadata
 }
 
+export interface IFileProgress {
+  readonly description: string
+}
+
+export interface ISourceFile {
+  readonly filename: string
+  readonly name: string
+  readonly ext: string
+}
+
 export class Exporter {
   private exportAlias: string = ''
   private exportCrosswalk: any | null = null
   private cdm: ContentDm
   private aspace: ArchivesSpace
   private exportLocation: string = ''
+  private collectionFieldInfo: any = null
+  private accessPath: string = ''
+  private preservationPath: string = ''
 
   public constructor(public cdmServer: CdmServer | null, public aspaceServer: ArchivesSpaceServer | null) {
     this.cdm = new ContentDm(this.cdmServer)
@@ -53,6 +77,8 @@ export class Exporter {
     type: ExportType,
     resource: string,
     collectionName: string,
+    accessPath: string,
+    preservationPath: string,
     progressCallback: (progress: IExportProgress) => void,
     errorCallback: (error: IExportError) => void,
   ): Promise<void> {
@@ -60,6 +86,8 @@ export class Exporter {
     const errors: Array<IExportError> = []
     this.exportAlias = alias
     this.exportCrosswalk = crosswalk
+    this.accessPath = accessPath
+    this.preservationPath = preservationPath
 
     const missing = this._missingFields(fields, crosswalk)
     if (missing) {
@@ -69,6 +97,8 @@ export class Exporter {
     }
 
     progressCallback({ value: undefined, description: 'Getting item records' })
+
+    this.collectionFieldInfo = await this.cdm.collectionFieldInfo(alias)
 
     location = download ? this.downloadLocation(location) : location
     this.exportLocation = dirname(location)
@@ -132,6 +162,8 @@ export class Exporter {
     compoundProgressCallback?: (item: number, total: number) => void
   ): Promise<any> {
     const item = await this.cdm.item(this.exportAlias, record.pointer)
+    const fileFieldInfo = this.collectionFieldInfo.find((f: any) => f.name === "File Name")
+    const fileNick = fileFieldInfo ? fileFieldInfo.nick : null
 
     if (record.filetype === 'cpd') {
       const object = await this.cdm.compoundObject(
@@ -150,6 +182,7 @@ export class Exporter {
 
         item.files.push({
           filename: page.pagefile,
+          accessFilename: pageInfo[fileNick],
           alias: this.exportAlias,
           pointer: page.pageptr,
           size: pageInfo.cdmfilesize,
@@ -160,6 +193,7 @@ export class Exporter {
     else {
       item.files = [{
         filename: record.find,
+        accessFilename: item[fileNick],
         alias: this.exportAlias,
         pointer: record.pointer,
         size: item.cdmfilesize,
@@ -204,7 +238,8 @@ export class Exporter {
 
     let mapItem: any = {
       values: [],
-      fieldValues: {}
+      fieldValues: {},
+      files: item.files
     }
     for (let field of fields) {
       const nicks = this.exportCrosswalk[field.id] ?
@@ -297,7 +332,7 @@ export class Exporter {
         value: undefined,
         description: 'Creating project directories'
       })
-      await createContinerFilesystem(this.exportLocation, project.objects)
+      await createContainerFilesystem(this.exportLocation, project.objects)
       await exportStream.write(JSON.stringify(project))
     }
 
@@ -324,9 +359,11 @@ export class Exporter {
     let index = 0
     for (let item of items) {
       index++
+      const processValue = ((index + items.length) / (items.length * 2))
       progressCallback({
-        value: ((index + items.length) / (items.length * 2)),
-        description: `Creating object ${index} of ${items.length}`
+        value: processValue,
+        description: `Creating object ${index} of ${items.length}`,
+        subdescription: 'Getting container information'
       })
 
       const aspaceUri = (('uhlib.aSpaceUri' in item.fieldValues) && item.fieldValues['uhlib.aSpaceUri'] !== '')
@@ -334,6 +371,20 @@ export class Exporter {
 
       const container = await this._createContainer(projectType, index, aspaceUri)
       const containers = container ? [container] : []
+
+      const files = await this._processCarpentersFiles(
+        item.files,
+        index,
+        container,
+        (fileProgress) => {
+          progressCallback({
+            value: processValue,
+            description: `Creating object ${index} of ${items.length}`,
+            subdescription: fileProgress.description
+          })
+        },
+        errorCallback
+      )
 
       const objects = Array.from(project.objects)
       objects.push(
@@ -350,7 +401,7 @@ export class Exporter {
           do_ark: '',
           pm_ark: '',
           metadata: item.fieldValues,
-          files: []
+          files: files
         }
       )
       project.objects = objects
@@ -404,6 +455,114 @@ export class Exporter {
     return this.addContainer(objectContainer, index)
   }
 
+  private async _processCarpentersFiles(
+    files: ReadonlyArray<any>,
+    objectIndex: number,
+    container: IContainer,
+    fileCopyProgressCallback: (fileProgress: IFileProgress) => void,
+    errorCallback: (error: IExportError) => void
+  ): Promise<any> {
+    if (files.length === 0) {
+      return []
+    }
+
+    const itemFilenames: ReadonlyArray<ISourceFile> = files.map((file) => {
+      const info = parse(file.accessFilename)
+      return {
+        filename: file.accessFilename,
+        name: info.name,
+        ext: info.ext
+      }
+    })
+    const accessFilenames = this.getFilenames(this.accessPath)
+    const preservationFilenames = this.getFilenames(this.preservationPath)
+
+    let index = 0
+    let carpentersFiles: Array<IFile> = []
+    for (let orgFilename of itemFilenames) {
+      index++
+      const containerPath = containerToPath(container)
+      if (accessFilenames) {
+        const file: IFile | null = await this._copyFiles(
+          orgFilename,
+          accessFilenames,
+          containerPath,
+          this.accessPath,
+          objectIndex,
+          index,
+          FilePurpose.Access,
+          fileCopyProgressCallback,
+          errorCallback
+        )
+        if (file) { carpentersFiles.push(file) }
+      }
+      if (preservationFilenames) {
+        const file: IFile | null = await this._copyFiles(
+          orgFilename,
+          preservationFilenames,
+          containerPath,
+          this.preservationPath,
+          objectIndex,
+          index,
+          FilePurpose.Preservation,
+          fileCopyProgressCallback,
+          errorCallback
+        )
+        if (file) { carpentersFiles.push(file) }
+      }
+    }
+
+    return carpentersFiles
+  }
+
+  private async _copyFiles(
+    originalFilename: ISourceFile,
+    files: ReadonlyArray<ISourceFile>,
+    containerPath: string,
+    srcPath: string,
+    objectIndex: number,
+    fileIndex: number,
+    purpose: FilePurpose,
+    fileCopyProgressCallback: (progress: IFileProgress) => void,
+    errorCallback: (error: IExportError) => void
+  ): Promise<any> {
+
+    const disPurpose = purpose === FilePurpose.Access ? 'access' :
+      purpose === FilePurpose.Preservation ? 'preservation' : ''
+    const f = files.find(file => originalFilename.name === file.name)
+    if (!f) {
+      errorCallback({
+        description: `Missing ${disPurpose} file: ${originalFilename}`
+      })
+      return null
+    }
+
+    const destPath = `${this.exportLocation}/Files/${containerPath}`
+    const filename = `${padLeft(objectIndex, 4, '0')}_${padLeft(fileIndex, 3, '0')}${filePostfix(purpose)}${f.ext}`
+
+    await createDirectories(destPath)
+
+    const src = `${srcPath}/${f.filename}`
+    const dest = `${destPath}${filename}`
+    try {
+      await copyFileToProject(src, dest, (progress) => {
+        const total = filesize(progress.total, { round: 1 })
+        fileCopyProgressCallback({
+          description: `Copying ${disPurpose} file: ${f.filename} (${total})`,
+        })
+      })
+    } catch (err) {
+      errorCallback({
+        description: `Couldn't copy file ${f.filename}: ${err}`
+      })
+      return null
+    }
+    return {
+      path: `Files/${containerPath}${filename}`,
+      purpose: purpose
+    }
+  }
+
   private addContainer(container: IContainer, index: number): IContainer {
     const newContainer = { ...container }
     if (container.type_1 === null) {
@@ -419,6 +578,26 @@ export class Exporter {
       newContainer.indicator_3 = index
     }
     return newContainer
+  }
+
+  private getFilenames(path: string): ReadonlyArray<ISourceFile> | null {
+    if (path === '') {
+      return null
+    }
+    try {
+      accessSync(path, constants.F_OK | constants.R_OK)
+      const files = readdirSync(path)
+      return files.map((file) => {
+        const info = parse(file)
+        return {
+          filename: file,
+          name: info.name,
+          ext: info.ext
+        }
+      })
+    } catch (err) {
+      return null
+    }
   }
 
   private downloadLocation(location: string): string {

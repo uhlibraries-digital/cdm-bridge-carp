@@ -6,6 +6,7 @@ import { Row } from '../layout'
 import { Dispatcher } from '../../lib/dispatcher'
 import { IField, ICrosswalkFieldHash, ICrosswalkField } from '../../lib/app-state'
 import { ArchivesSpaceResource } from './archives-space-resource'
+import { Location } from './location'
 import { IResource } from '../../lib/archivesspace';
 
 interface IMapProps {
@@ -21,6 +22,8 @@ interface IMapProps {
 
 interface IMapState {
   readonly disabledNicks: ReadonlyArray<string>
+  readonly accessPath: string
+  readonly preservationPath: string
 }
 
 export class Map extends React.Component<IMapProps, IMapState> {
@@ -29,7 +32,9 @@ export class Map extends React.Component<IMapProps, IMapState> {
     super(props)
 
     this.state = {
-      disabledNicks: []
+      disabledNicks: [],
+      accessPath: '',
+      preservationPath: ''
     }
   }
 
@@ -39,6 +44,12 @@ export class Map extends React.Component<IMapProps, IMapState> {
 
   public componentWillReceiveProps(nextProps: IMapProps) {
     this.loadDisabledNicks(nextProps.alias)
+    if (nextProps.alias !== this.props.alias) {
+      this.setState({
+        accessPath: '',
+        preservationPath: '',
+      })
+    }
   }
 
   private loadDisabledNicks(alias: string) {
@@ -97,6 +108,16 @@ export class Map extends React.Component<IMapProps, IMapState> {
       nicks: [""],
       itemExport: false
     }
+  }
+
+  private onAccessPathChanged = (path: string) => {
+    this.setState({ accessPath: path })
+    this.props.dispatcher.setAccessPath(path)
+  }
+
+  private onPreservationPathChanged = (path: string) => {
+    this.setState({ preservationPath: path })
+    this.props.dispatcher.setPreservationPath(path)
   }
 
   private onResourceChanged = (uri: string) => {
@@ -194,10 +215,32 @@ export class Map extends React.Component<IMapProps, IMapState> {
     )
   }
 
+  private renderAccessPath() {
+    return (
+      <Location
+        label="Access Files Local Path"
+        path={this.state.accessPath}
+        onChange={this.onAccessPathChanged}
+      />
+    )
+  }
+
+  private renderPreservationPath() {
+    return (
+      <Location
+        label="Preservation Files Local Path"
+        path={this.state.preservationPath}
+        onChange={this.onPreservationPathChanged}
+      />
+    )
+  }
+
   public render() {
     return (
       <div className={this.props.className}>
         {this.renderArchivesSpaceResouces()}
+        {this.renderAccessPath()}
+        {this.renderPreservationPath()}
         {this.renderMapHeader()}
         {this.renderMapItem()}
       </div>

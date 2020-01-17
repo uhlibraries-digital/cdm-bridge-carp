@@ -4,6 +4,10 @@
   padding: var(--spacing-double);
   align-items: center;
 
+  .export-container {
+    width: 500px;
+  }
+
   .title-container {
     max-width: 100%;
     display: flex;

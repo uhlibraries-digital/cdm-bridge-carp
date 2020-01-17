@@ -72,6 +72,8 @@ export class AppStore extends TypedBaseStore<IAppState> {
   private selectedArchivesSpaceResource: string = ''
   private isUpdateAvailable: boolean = false
   private updateState: IUpdateState | null = null
+  private accessPath: string = ''
+  private preservationPath: string = ''
 
   private readonly archivesSpaceStore: ArchivesSpaceStore
 
@@ -156,7 +158,9 @@ export class AppStore extends TypedBaseStore<IAppState> {
       archivesSpaceResources: this.archivesSpaceResources,
       selectedArchivesSpaceResource: this.selectedArchivesSpaceResource,
       isUpdateAvailable: this.isUpdateAvailable,
-      updateState: this.updateState
+      updateState: this.updateState,
+      accessPath: this.accessPath,
+      preservationPath: this.preservationPath
     }
   }
 
@@ -435,6 +439,18 @@ export class AppStore extends TypedBaseStore<IAppState> {
     return Promise.resolve()
   }
 
+  public async _setAccessPath(path: string): Promise<any> {
+    this.accessPath = path
+    this.emitUpdate()
+    return Promise.resolve
+  }
+
+  public async _setPreservationPath(path: string): Promise<any> {
+    this.preservationPath = path
+    this.emitUpdate()
+    return Promise.resolve()
+  }
+
   public _pushError(error: Error): Promise<void> {
     const newErrors = Array.from(this.errors)
     newErrors.push(error)
@@ -473,6 +489,8 @@ export class AppStore extends TypedBaseStore<IAppState> {
       type,
       this.selectedArchivesSpaceResource,
       collectionName,
+      this.accessPath,
+      this.preservationPath,
       (progress) => {
         this.exportProgress = progress
         this.emitUpdate()

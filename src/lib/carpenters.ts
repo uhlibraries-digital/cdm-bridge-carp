@@ -1,7 +1,10 @@
 import { v4 } from 'uuid'
 import {
   access,
-  constants
+  constants,
+  accessSync,
+  lstatSync,
+  copyFile
 } from 'fs'
 import mkdirp from 'mkdirp'
 import { padLeft } from './string'
@@ -62,6 +65,11 @@ export interface IFile {
   purpose: FilePurpose
 }
 
+export interface IFileCopyProgress {
+  readonly transfered: number
+  readonly total: number
+}
+
 export function newObject(title: string) {
   return {
     uuid: v4(),
@@ -78,7 +86,7 @@ export function newObject(title: string) {
   }
 }
 
-export async function createContinerFilesystem(
+export async function createContainerFilesystem(
   projectpath: string,
   objects: ReadonlyArray<IObject>
 ) {
@@ -86,16 +94,26 @@ export async function createContinerFilesystem(
     return Promise.resolve()
   }
 
+  return Promise.all(objects.map((object) => {
+    const path = containerToPath(object.containers[0])
+    const fullPath = `${projectpath}/Files/${path}`
+    return createDirectories(fullPath)
+  }))
+}
+
+export async function createDirectories(
+  path: string
+): Promise<any> {
   return new Promise((resolve, reject) => {
-    objects.map((object) => {
-      const path = containerToPath(object.containers[0])
-      access(`${projectpath}/Files/${path}`, constants.F_OK, (err) => {
-        if (err) {
-          mkdirp(`${projectpath}/Files/${path}`, (err) => {
-            return err ? reject() : resolve()
-          })
-        }
-      })
+    access(path, constants.F_OK, (err) => {
+      if (err) {
+        mkdirp(path, (err) => {
+          return err ? reject(err) : resolve()
+        })
+      }
+      else {
+        return resolve()
+      }
     })
   })
 }
@@ -114,4 +132,42 @@ export const containerToPath = (container: IContainer | null) => {
       : '')
 
   return path.replace(' ', '_')
+}
+
+export async function copyFileToProject(
+  src: string,
+  dest: string,
+  progressCallback: (progress: IFileCopyProgress) => void
+): Promise<any> {
+  try {
+    accessSync(src)
+  } catch (e) { return Promise.reject(`Could not file file: ${src}`) }
+
+  return new Promise((resolve, reject) => {
+    const state = lstatSync(src)
+    const totalSize = state.size
+    progressCallback({
+      transfered: 0,
+      total: totalSize
+    })
+    copyFile(src, dest, (err) => {
+      if (err) {
+        return reject(err)
+      }
+      resolve()
+    })
+  })
+}
+
+export const filePostfix = (purpose: FilePurpose) => {
+  if (purpose == FilePurpose.Access) {
+    return '_ac'
+  }
+  if (purpose === FilePurpose.Preservation) {
+    return '_pm'
+  }
+  if (purpose === FilePurpose.ModifiedMaster) {
+    return '_mm'
+  }
+  return ''
 }

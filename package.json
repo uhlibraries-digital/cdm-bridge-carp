@@ -22,8 +22,7 @@
     "productName": "CDM Bridge2Carp",
     "appId": "edu.uh.lib.Cdm2Carp",
     "dmg": {
-      "contents": [
-        {
+      "contents": [{
           "x": 130,
           "y": 220
         },
@@ -81,7 +80,7 @@
     "@types/file-url": "^2.0.0",
     "@types/filesize": "^3.6.0",
     "@types/mkdirp": "^0.5.2",
-    "@types/node": "^10.5.1",
+    "@types/node": "^10.5.5",
     "@types/react": "^16.4.1",
     "@types/react-dom": "^16.0.6",
     "@types/react-transition-group": "1.1.1",

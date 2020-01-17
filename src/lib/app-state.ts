@@ -38,6 +38,8 @@ export interface IAppState {
   readonly selectedArchivesSpaceResource: string
   readonly isUpdateAvailable: boolean
   readonly updateState: IUpdateState | null
+  readonly accessPath: string
+  readonly preservationPath: string
 }
 
 export interface IArchivesSpace {
