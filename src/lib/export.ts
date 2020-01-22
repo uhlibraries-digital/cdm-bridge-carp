@@ -538,7 +538,7 @@ export class Exporter {
     }
 
     const destPath = `${this.exportLocation}/Files/${containerPath}`
-    const filename = `${padLeft(objectIndex, 4, '0')}_${padLeft(fileIndex, 3, '0')}${filePostfix(purpose)}${f.ext}`
+    const filename = `${padLeft(objectIndex, 4, '0')}_${padLeft(fileIndex, 4, '0')}${filePostfix(purpose)}${f.ext}`
 
     await createDirectories(destPath)
 
