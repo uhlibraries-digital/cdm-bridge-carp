@@ -106,7 +106,7 @@ export class ArchivesSpace {
         const now = new Date()
         this.token = {
           session: response.body.session,
-          expires: now.getTime()
+          expires: now.getTime() + (3600 * 1000)
         }
         return this.token
       })
