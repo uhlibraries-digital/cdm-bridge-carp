@@ -369,7 +369,15 @@ export class Exporter {
       const aspaceUri = (('uhlib.aSpaceUri' in item.fieldValues) && item.fieldValues['uhlib.aSpaceUri'] !== '')
         ? item.fieldValues['uhlib.aSpaceUri'] : ''
 
-      const container = await this._createContainer(projectType, index, aspaceUri)
+      const archivalobject = await this.aspace.getArchivalObject(aspaceUri)
+      if (archivalobject && resource !== archivalobject['resource']['ref']) {
+        errorCallback({
+          description: `"${item.fieldValues['dcterms.title']}" doesn't match expected ArchivesSpace collection uri ${resource}`
+        })
+        continue
+      }
+
+      const container = await this._createContainer(projectType, index, archivalobject)
       const containers = container ? [container] : []
 
       const files = await this._processCarpentersFiles(
@@ -410,7 +418,7 @@ export class Exporter {
     return project
   }
 
-  private async _createContainer(projectType: ProjectType, index: number, uri: string): Promise<any> {
+  private async _createContainer(projectType: ProjectType, index: number, archivalobject: any): Promise<any> {
     if (projectType === ProjectType.NonArchival) {
       return {
         top_container: null,
@@ -422,9 +430,8 @@ export class Exporter {
         indicator_3: null
       }
     }
-    if (uri === '') return null
+    if (!archivalobject) return null
 
-    const archivalobject = await this.aspace.getArchivalObject(uri)
     const containers = archivalobject.instances.filter((i: any) => {
       return i.sub_container && i.sub_container.top_container
     })

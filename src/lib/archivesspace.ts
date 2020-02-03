@@ -34,6 +34,7 @@ export class ArchivesSpace {
   }
 
   public async getArchivalObject(uri: string): Promise<any> {
+    if (uri === '') return null
     return this._request(uri)
       .catch((error) => {
         throw error
