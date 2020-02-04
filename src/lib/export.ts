@@ -357,6 +357,7 @@ export class Exporter {
     }
 
     let index = 0
+    let cdmFiles: Array<ISourceFile> = []
     for (let item of items) {
       index++
       const processValue = ((index + items.length) / (items.length * 2))
@@ -394,6 +395,9 @@ export class Exporter {
         errorCallback
       )
 
+      const cdmFilenames = this.getCdmFilenames(item.files)
+      cdmFiles = cdmFilenames ? cdmFiles.concat(cdmFilenames) : cdmFiles
+
       const objects = Array.from(project.objects)
       objects.push(
         {
@@ -414,6 +418,8 @@ export class Exporter {
       )
       project.objects = objects
     }
+
+    this.reportMissedFiles(cdmFiles)
 
     return project
   }
@@ -473,16 +479,11 @@ export class Exporter {
       return []
     }
 
-    const itemFilenames: ReadonlyArray<ISourceFile> = files.map((file) => {
-      const info = parse(file.accessFilename)
-      return {
-        filename: file.accessFilename,
-        name: info.name,
-        ext: info.ext
-      }
-    })
+    const itemFilenames = this.getCdmFilenames(files)
     const accessFilenames = this.getFilenames(this.accessPath)
     const preservationFilenames = this.getFilenames(this.preservationPath)
+
+    if (!itemFilenames) return []
 
     let index = 0
     let carpentersFiles: Array<IFile> = []
@@ -587,6 +588,17 @@ export class Exporter {
     return newContainer
   }
 
+  private getCdmFilenames(files: ReadonlyArray<any>): ReadonlyArray<ISourceFile> | null {
+    return files.map((file) => {
+      const info = parse(file.accessFilename)
+      return {
+        filename: file.accessFilename,
+        name: info.name,
+        ext: info.ext
+      }
+    })
+  }
+
   private getFilenames(path: string): ReadonlyArray<ISourceFile> | null {
     if (path === '') {
       return null
@@ -605,6 +617,49 @@ export class Exporter {
     } catch (err) {
       return null
     }
+  }
+
+  private async reportMissedFiles(cdmFiles: ReadonlyArray<ISourceFile>): Promise<any> {
+    const accessFilenames = this.getFilenames(this.accessPath)
+    const preservationFilenames = this.getFilenames(this.preservationPath)
+
+    const accessDifference = accessFilenames ?
+      accessFilenames.filter((file) => {
+        return cdmFiles.findIndex(f => f.name === file.name) === -1
+      })
+      : []
+    const preservationDifference = preservationFilenames ?
+      preservationFilenames.filter((file) => {
+        return cdmFiles.findIndex(f => f.name === file.name) === -1
+      })
+      : []
+
+    if (accessDifference.length > 0 || preservationDifference.length > 0) {
+      this.outputMissedFileReport(accessDifference, preservationDifference)
+    }
+  }
+
+  private outputMissedFileReport(
+    access: ReadonlyArray<ISourceFile>,
+    preservation: ReadonlyArray<ISourceFile>
+  ) {
+
+    const date = this.toLocalDateString()
+    const alias = this.exportAlias.replace('/', '')
+    const outputLocation = `${this.exportLocation}/missed_files_${alias}_${date}.txt`
+    const outputAccess = access.map(a => `${this.accessPath}/${a.filename}`)
+    const outputPreservation = preservation.map(p => `${this.preservationPath}/${p.filename}`)
+
+    const output = ""
+      + `Access Files:\n${outputAccess.join("\n")}`
+      + "\n\n"
+      + `Preservation Files:\n${outputPreservation.join("\n")}`
+
+    writeFile(outputLocation, output, (err) => {
+      if (err) {
+        console.error(err)
+      }
+    })
   }
 
   private downloadLocation(location: string): string {
