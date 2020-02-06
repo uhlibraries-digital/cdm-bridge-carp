@@ -573,15 +573,15 @@ export class Exporter {
 
   private addContainer(container: IContainer, index: number): IContainer {
     const newContainer = { ...container }
-    if (container.type_1 === null) {
+    if (!container.type_1) {
       newContainer.type_1 = 'Item'
       newContainer.indicator_1 = index
     }
-    else if (container.type_2 === null) {
+    else if (!container.type_2) {
       newContainer.type_2 = 'Item',
         newContainer.indicator_2 = index
     }
-    else if (container.type_3 === null) {
+    else if (!container.type_3) {
       newContainer.type_3 = 'Item'
       newContainer.indicator_3 = index
     }
