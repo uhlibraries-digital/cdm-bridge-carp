@@ -540,7 +540,7 @@ export class Exporter {
     const f = files.find(file => originalFilename.name === file.name)
     if (!f) {
       errorCallback({
-        description: `Missing ${disPurpose} file: ${originalFilename}`
+        description: `Missing ${disPurpose} file: ${originalFilename.filename}`
       })
       return null
     }
