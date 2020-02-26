@@ -179,10 +179,10 @@ export class Exporter {
           compoundProgressCallback(++count, pages.length)
         }
         const pageInfo = await this.cdm.item(this.exportAlias, page.pageptr)
-
+        const filename = typeof pageInfo[fileNick] === 'string' ? pageInfo[fileNick] : ''
         item.files.push({
           filename: page.pagefile,
-          accessFilename: pageInfo[fileNick],
+          accessFilename: filename,
           alias: this.exportAlias,
           pointer: page.pageptr,
           size: pageInfo.cdmfilesize,
@@ -191,9 +191,10 @@ export class Exporter {
       }
     }
     else {
+      const filename = typeof item[fileNick] === 'string' ? item[fileNick] : ''
       item.files = [{
         filename: record.find,
-        accessFilename: item[fileNick],
+        accessFilename: filename,
         alias: this.exportAlias,
         pointer: record.pointer,
         size: item.cdmfilesize,
