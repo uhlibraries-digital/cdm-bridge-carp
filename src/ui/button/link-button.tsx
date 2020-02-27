@@ -36,7 +36,7 @@ export class LinkButton extends React.Component<ILinkButtonProps, {}> {
     }
 
     if (this.props.onClick) {
-      this.props.onClick
+      this.props.onClick()
     }
   }
 
