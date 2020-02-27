@@ -407,7 +407,7 @@ export class Exporter {
           dates: [],
           containers: containers,
           level: 'item',
-          artificial: true,
+          artificial: projectType === ProjectType.Archival,
           parent_uri: aspaceUri,
           uri: null,
           productionNotes: '',
