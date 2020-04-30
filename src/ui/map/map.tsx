@@ -24,6 +24,7 @@ interface IMapState {
   readonly disabledNicks: ReadonlyArray<string>
   readonly accessPath: string
   readonly preservationPath: string
+  readonly modifiedMasterPath: string
 }
 
 export class Map extends React.Component<IMapProps, IMapState> {
@@ -34,7 +35,8 @@ export class Map extends React.Component<IMapProps, IMapState> {
     this.state = {
       disabledNicks: [],
       accessPath: '',
-      preservationPath: ''
+      preservationPath: '',
+      modifiedMasterPath: ''
     }
   }
 
@@ -48,6 +50,7 @@ export class Map extends React.Component<IMapProps, IMapState> {
       this.setState({
         accessPath: '',
         preservationPath: '',
+        modifiedMasterPath: ''
       })
     }
   }
@@ -118,6 +121,11 @@ export class Map extends React.Component<IMapProps, IMapState> {
   private onPreservationPathChanged = (path: string) => {
     this.setState({ preservationPath: path })
     this.props.dispatcher.setPreservationPath(path)
+  }
+
+  private onModifiedMasterPathChanged = (path: string) => {
+    this.setState({ modifiedMasterPath: path })
+    this.props.dispatcher.setModifiedMasterPath(path)
   }
 
   private onResourceChanged = (uri: string) => {
@@ -235,12 +243,23 @@ export class Map extends React.Component<IMapProps, IMapState> {
     )
   }
 
+  private renderModifiedMasterPath() {
+    return (
+      <Location
+        label="Modified Masters Local Path"
+        path={this.state.modifiedMasterPath}
+        onChange={this.onModifiedMasterPathChanged}
+      />
+    )
+  }
+
   public render() {
     return (
       <div className={this.props.className}>
         {this.renderArchivesSpaceResouces()}
         {this.renderAccessPath()}
         {this.renderPreservationPath()}
+        {this.renderModifiedMasterPath()}
         {this.renderMapHeader()}
         {this.renderMapItem()}
       </div>

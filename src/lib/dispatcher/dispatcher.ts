@@ -81,6 +81,10 @@ export class Dispatcher {
     return this.appStore._setPreservationPath(path)
   }
 
+  public setModifiedMasterPath(path: string): Promise<void> {
+    return this.appStore._setModifiedMasterPath(path)
+  }
+
   public export(type: ExportType, download?: boolean): Promise<void> {
     return this.appStore._completeSaveInDesktop(type)
       .then(location => this.appStore._export(location, type, download))

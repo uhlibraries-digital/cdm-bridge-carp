@@ -74,6 +74,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
   private updateState: IUpdateState | null = null
   private accessPath: string = ''
   private preservationPath: string = ''
+  private modifiedMasterPath: string = ''
 
   private readonly archivesSpaceStore: ArchivesSpaceStore
 
@@ -160,7 +161,8 @@ export class AppStore extends TypedBaseStore<IAppState> {
       isUpdateAvailable: this.isUpdateAvailable,
       updateState: this.updateState,
       accessPath: this.accessPath,
-      preservationPath: this.preservationPath
+      preservationPath: this.preservationPath,
+      modifiedMasterPath: this.modifiedMasterPath
     }
   }
 
@@ -451,6 +453,12 @@ export class AppStore extends TypedBaseStore<IAppState> {
     return Promise.resolve()
   }
 
+  public async _setModifiedMasterPath(path: string): Promise<any> {
+    this.modifiedMasterPath = path
+    this.emitUpdate()
+    return Promise.resolve()
+  }
+
   public _pushError(error: Error): Promise<void> {
     const newErrors = Array.from(this.errors)
     newErrors.push(error)
@@ -491,6 +499,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
       collectionName,
       this.accessPath,
       this.preservationPath,
+      this.modifiedMasterPath,
       (progress) => {
         this.exportProgress = progress
         this.emitUpdate()

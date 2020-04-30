@@ -40,6 +40,7 @@ export interface IAppState {
   readonly updateState: IUpdateState | null
   readonly accessPath: string
   readonly preservationPath: string
+  readonly modifiedMasterPath: string
 }
 
 export interface IArchivesSpace {

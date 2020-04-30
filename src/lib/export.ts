@@ -62,6 +62,7 @@ export class Exporter {
   private collectionFieldInfo: any = null
   private accessPath: string = ''
   private preservationPath: string = ''
+  private modifiedMasterPath: string = ''
 
   public constructor(public cdmServer: CdmServer | null, public aspaceServer: ArchivesSpaceServer | null) {
     this.cdm = new ContentDm(this.cdmServer)
@@ -79,6 +80,7 @@ export class Exporter {
     collectionName: string,
     accessPath: string,
     preservationPath: string,
+    modifiedMasterPath: string,
     progressCallback: (progress: IExportProgress) => void,
     errorCallback: (error: IExportError) => void,
   ): Promise<void> {
@@ -88,6 +90,7 @@ export class Exporter {
     this.exportCrosswalk = crosswalk
     this.accessPath = accessPath
     this.preservationPath = preservationPath
+    this.modifiedMasterPath = modifiedMasterPath
 
     const missing = this._missingFields(fields, crosswalk)
     if (missing) {
@@ -483,6 +486,7 @@ export class Exporter {
     const itemFilenames = this.getCdmFilenames(files)
     const accessFilenames = this.getFilenames(this.accessPath)
     const preservationFilenames = this.getFilenames(this.preservationPath)
+    const modifiedMasterFilenames = this.getFilenames(this.modifiedMasterPath)
 
     if (!itemFilenames) return []
 
@@ -514,6 +518,20 @@ export class Exporter {
           objectIndex,
           index,
           FilePurpose.Preservation,
+          fileCopyProgressCallback,
+          errorCallback
+        )
+        if (file) { carpentersFiles.push(file) }
+      }
+      if (modifiedMasterFilenames) {
+        const file: IFile | null = await this._copyFiles(
+          orgFilename,
+          modifiedMasterFilenames,
+          containerPath,
+          this.modifiedMasterPath,
+          objectIndex,
+          index,
+          FilePurpose.ModifiedMaster,
           fileCopyProgressCallback,
           errorCallback
         )
@@ -623,6 +641,7 @@ export class Exporter {
   private async reportMissedFiles(cdmFiles: ReadonlyArray<ISourceFile>): Promise<any> {
     const accessFilenames = this.getFilenames(this.accessPath)
     const preservationFilenames = this.getFilenames(this.preservationPath)
+    const modifiedMasterFilenames = this.getFilenames(this.modifiedMasterPath)
 
     const accessDifference = accessFilenames ?
       accessFilenames.filter((file) => {
@@ -634,15 +653,29 @@ export class Exporter {
         return cdmFiles.findIndex(f => f.name === file.name) === -1
       })
       : []
+    const modifiedMasterDifference = modifiedMasterFilenames ?
+      modifiedMasterFilenames.filter((file) => {
+        return cdmFiles.findIndex(f => f.name === file.name) === -1
+      })
+      : []
 
-    if (accessDifference.length > 0 || preservationDifference.length > 0) {
-      this.outputMissedFileReport(accessDifference, preservationDifference)
+    if (
+      accessDifference.length > 0 ||
+      preservationDifference.length > 0 ||
+      modifiedMasterDifference.length > 0
+    ) {
+      this.outputMissedFileReport(
+        accessDifference,
+        preservationDifference,
+        modifiedMasterDifference
+      )
     }
   }
 
   private outputMissedFileReport(
     access: ReadonlyArray<ISourceFile>,
-    preservation: ReadonlyArray<ISourceFile>
+    preservation: ReadonlyArray<ISourceFile>,
+    modifiedMaster: ReadonlyArray<ISourceFile>
   ) {
 
     const date = this.toLocalDateString()
@@ -650,11 +683,14 @@ export class Exporter {
     const outputLocation = `${this.exportLocation}/missed_files_${alias}_${date}.txt`
     const outputAccess = access.map(a => `${this.accessPath}/${a.filename}`)
     const outputPreservation = preservation.map(p => `${this.preservationPath}/${p.filename}`)
+    const outputModifiedMaster = modifiedMaster.map(m => `${this.modifiedMasterPath}/${m.filename}`)
 
     const output = ""
       + `Access Files:\n${outputAccess.join("\n")}`
       + "\n\n"
       + `Preservation Files:\n${outputPreservation.join("\n")}`
+      + "\n\n"
+      + `Modified Master Files:\n${outputModifiedMaster.join("\n")}`
 
     writeFile(outputLocation, output, (err) => {
       if (err) {
