@@ -558,16 +558,19 @@ export class AppStore extends TypedBaseStore<IAppState> {
         ]
       }
 
-      const url = remote.dialog.showSaveDialog({
+      return remote.dialog.showSaveDialog({
         title: "Export Collection",
         buttonLabel: "Export",
         filters: filters
       })
-      if (url) {
-        resolve(url)
-        return
-      }
-      reject('No export location set')
+        .then(result => {
+          const url = result.filePath
+          if (url) {
+            resolve(url)
+            return
+          }
+        })
+        .catch(err => reject('No export location set'))
     })
   }
 
