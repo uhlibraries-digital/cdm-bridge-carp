@@ -376,7 +376,11 @@ export class Exporter {
 
       const archivalobject = await this.aspace.getArchivalObject(aspaceUri)
         .catch((err) => {
-          console.log(err)
+          const error = new Error(
+            `"${item.fieldValues['dcterms.title']}" has a invalid ArchivesSpace uri ${aspaceUri} please check the URI\n` +
+            `${err}`
+          )
+          return Promise.reject(error)
         })
 
       if (archivalobject && resource !== archivalobject['resource']['ref']) {
