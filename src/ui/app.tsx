@@ -50,14 +50,14 @@ export class App extends React.Component<IAppProps, IAppState> {
 
     ipcRenderer.on(
       'menu-event',
-      (event: Electron.IpcMessageEvent, { name }: { name: MenuEvent }) => {
+      (event: Electron.IpcRendererEvent, { name }: { name: MenuEvent }) => {
         this.onMenuEvent(name)
       }
     )
 
     ipcRenderer.on(
       'update-changed',
-      (event: Electron.IpcMessageEvent, { state }: { state: IUpdateState }) => {
+      (event: Electron.IpcRendererEvent, { state }: { state: IUpdateState }) => {
         const status = state.status
         if (status === UpdateStatus.UpdateReady) {
           this.props.dispatcher.setUpdateAvailableVisibility(true)
@@ -68,7 +68,7 @@ export class App extends React.Component<IAppProps, IAppState> {
 
     ipcRenderer.on(
       'update-error',
-      (event: Electron.IpcMessageEvent, { error }: { error: Error }) => {
+      (event: Electron.IpcRendererEvent, { error }: { error: Error }) => {
         this.props.dispatcher.setUpdateAvailableVisibility(false)
       }
     )
@@ -140,7 +140,7 @@ export class App extends React.Component<IAppProps, IAppState> {
       case PopupType.About:
         return (
           <About
-            appName={remote.app.getName()}
+            appName={remote.app.name}
             appVersion={remote.app.getVersion()}
             onDismissed={this.onPopupDismissed}
           />

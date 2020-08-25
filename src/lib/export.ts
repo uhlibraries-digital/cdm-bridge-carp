@@ -375,6 +375,10 @@ export class Exporter {
         ? item.fieldValues['uhlib.aSpaceUri'] : ''
 
       const archivalobject = await this.aspace.getArchivalObject(aspaceUri)
+        .catch((err) => {
+          console.log(err)
+        })
+
       if (archivalobject && resource !== archivalobject['resource']['ref']) {
         errorCallback({
           description: `"${item.fieldValues['dcterms.title']}" doesn't match expected ArchivesSpace collection uri ${resource}`

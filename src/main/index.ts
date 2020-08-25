@@ -44,7 +44,7 @@ app.on('ready', () => {
     updateStore.checkForUpdates()
   }
 
-  ipcMain.on('menu-event', (event: Electron.IpcMessageEvent, args: any[]) => {
+  ipcMain.on('menu-event', (event: Electron.IpcMainEvent, args: any[]) => {
     const { name }: { name: MenuEvent } = event as any
     if (mainWindow) {
       mainWindow.sendMenuEvent(name)
@@ -53,7 +53,7 @@ app.on('ready', () => {
 
   ipcMain.on(
     'open-external',
-    (event: Electron.IpcMessageEvent, { path }: { path: string }) => {
+    (event: Electron.IpcMainEvent, { path }: { path: string }) => {
       const result = shell.openExternal(path)
       event.sender.send('open-external-result', { result })
     }
@@ -61,7 +61,7 @@ app.on('ready', () => {
 
   ipcMain.on(
     'update-now',
-    (event: Electron.IpcMessageEvent, args: any[]) => {
+    (event: Electron.IpcMainEvent, args: any[]) => {
       updateStore.quitAndInstallUpdate()
     }
   )

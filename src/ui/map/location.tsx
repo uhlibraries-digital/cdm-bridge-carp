@@ -57,14 +57,14 @@ export class Location extends React.Component<ILocationProp, ILocationState> {
   }
 
   private showFilePicker = async () => {
-    const directory: string[] | null = remote.dialog.showOpenDialog({
+    const { filePaths } = await remote.dialog.showOpenDialog({
       properties: ['openDirectory']
     })
-    if (!directory) {
+    if (!filePaths) {
       return
     }
 
-    const path = directory[0]
+    const path = filePaths[0]
     this.setState({ path })
     if (this.props.onChange) {
       this.props.onChange(path)
