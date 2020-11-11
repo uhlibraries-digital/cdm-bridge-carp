@@ -21,6 +21,14 @@ export enum FilePurpose {
   SubmissionDocumentation = "sub-documents"
 }
 
+export enum ProcessingType {
+  Unknown = "",
+  Image = "image",
+  Text = "text",
+  Video = "video",
+  Sound = "sound"
+}
+
 export interface IProject {
   type: ProjectType
   resource: string
@@ -32,6 +40,7 @@ export interface IProject {
 
 export interface IObject {
   uuid: string
+  processing_type: ProcessingType
   title: string
   dates: ReadonlyArray<string>
   containers: ReadonlyArray<IContainer>

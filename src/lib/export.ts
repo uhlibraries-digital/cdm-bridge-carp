@@ -13,8 +13,8 @@ import {
   readdirSync,
   accessSync,
   constants
-} from 'fs';
-import { basename, dirname, parse } from 'path';
+} from 'fs'
+import { basename, dirname, parse } from 'path'
 import { sync } from 'mkdirp'
 import { v4 } from 'uuid'
 import {
@@ -27,14 +27,15 @@ import {
   FilePurpose,
   copyFileToProject,
   createDirectories,
-  IFile
-} from './carpenters';
+  IFile,
+  ProcessingType
+} from './carpenters'
 import {
   ArchivesSpace,
   ArchivesSpaceServer
-} from './archivesspace';
-import { padLeft } from './string';
-import * as filesize from 'filesize';
+} from './archivesspace'
+import { padLeft } from './string'
+import * as filesize from 'filesize'
 
 const __DEV__ = process.env.NODE_ENV === 'development'
 
@@ -122,7 +123,7 @@ export class Exporter {
         errorCallback(error)
       }
     )
-    exportStream.end();
+    exportStream.end()
 
     if (errors.length > 0) {
       this.processErrors(errors, location)
@@ -176,7 +177,7 @@ export class Exporter {
       const pages = this._pages(object)
 
       item.files = []
-      let count = 0;
+      let count = 0
       for (let page of pages) {
         if (compoundProgressCallback) {
           compoundProgressCallback(++count, pages.length)
@@ -289,7 +290,7 @@ export class Exporter {
     let count = 0
     let items: Array<any> = []
     let csvItems: Array<any> = [fields.map((key) => {
-      return key.name;
+      return key.name
     })]
 
     for (let record of records) {
@@ -320,7 +321,7 @@ export class Exporter {
       }
 
       if (__DEV__) {
-        console.log(`heapTotal: ${Math.round(process.memoryUsage().heapTotal / 1e6)}MB, heapUsed: ${Math.round(process.memoryUsage().heapUsed / 1e6)}MB`);
+        console.log(`heapTotal: ${Math.round(process.memoryUsage().heapTotal / 1e6)}MB, heapUsed: ${Math.round(process.memoryUsage().heapUsed / 1e6)}MB`)
       }
     }
 
@@ -410,10 +411,19 @@ export class Exporter {
       const cdmFilenames = this.getCdmFilenames(item.files)
       cdmFiles = cdmFilenames ? cdmFiles.concat(cdmFilenames) : cdmFiles
 
+      let processingType = ProcessingType.Unknown
+      let productionNotes = ''
+      if ('dcterms.type' in item.fieldValues) {
+        processingType = this.processingType(item.fieldValues['dcterms.type'])
+        productionNotes = this.processingTypeNotes(item.fieldValues['dcterms.type'])
+        item.fieldValues['dcterms.type'] = this.fixMultipleTypeFieldValues(item.fieldValues['dcterms.type'])
+      }
+
       const objects = Array.from(project.objects)
       objects.push(
         {
           uuid: v4(),
+          processing_type: processingType,
           title: item.fieldValues['dcterms.title'],
           dates: [],
           containers: containers,
@@ -421,7 +431,7 @@ export class Exporter {
           artificial: projectType === ProjectType.Archival,
           parent_uri: aspaceUri,
           uri: null,
-          productionNotes: '',
+          productionNotes: productionNotes,
           do_ark: '',
           pm_ark: '',
           metadata: item.fieldValues,
@@ -760,11 +770,40 @@ export class Exporter {
   }
 
   private toLocalDateString(): string {
-    const date = new Date();
+    const date = new Date()
     return String(date.getFullYear()) +
       ('0' + (date.getMonth() + 1)).slice(-2) +
       ('0' + date.getDate()).slice(-2) + '_' +
       ('0' + date.getHours()).slice(-2) +
       ('0' + date.getMinutes()).slice(-2)
+  }
+
+  private processingType(fieldType: string): ProcessingType {
+    const type = fieldType.toLowerCase()
+    if (type === 'image') {
+      return ProcessingType.Image
+    }
+    else if (type === 'text') {
+      return ProcessingType.Text
+    }
+    return ProcessingType.Unknown
+  }
+
+  private processingTypeNotes(fieldType: string): string {
+    const types = fieldType.split(';')
+
+    if (types.length >= 2) {
+      return 'Review processing type and Type metadata field'
+    }
+
+    return ''
+  }
+
+  private fixMultipleTypeFieldValues(fieldType: string): string {
+    const types = fieldType.split(';')
+    if (types.length >= 2) {
+      return ''
+    }
+    return fieldType
   }
 }
