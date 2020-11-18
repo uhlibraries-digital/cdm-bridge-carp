@@ -75,6 +75,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
   private accessPath: string = ''
   private preservationPath: string = ''
   private modifiedMasterPath: string = ''
+  private renameFiles: boolean = true
 
   private readonly archivesSpaceStore: ArchivesSpaceStore
 
@@ -162,7 +163,8 @@ export class AppStore extends TypedBaseStore<IAppState> {
       updateState: this.updateState,
       accessPath: this.accessPath,
       preservationPath: this.preservationPath,
-      modifiedMasterPath: this.modifiedMasterPath
+      modifiedMasterPath: this.modifiedMasterPath,
+      renameFiles: this.renameFiles
     }
   }
 
@@ -358,6 +360,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
   }
 
   public _setCollectionFieldInfo(alias: string): Promise<any> {
+    this.renameFiles = true
     this.selectedAlias = alias
     const cdm = new ContentDm(this.contentdmServer)
 
@@ -459,6 +462,11 @@ export class AppStore extends TypedBaseStore<IAppState> {
     return Promise.resolve()
   }
 
+  public async _setRenameFiles(value: boolean): Promise<any> {
+    this.renameFiles = value
+    this.emitUpdate()
+  }
+
   public _pushError(error: Error): Promise<void> {
     const newErrors = Array.from(this.errors)
     newErrors.push(error)
@@ -500,6 +508,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
       this.accessPath,
       this.preservationPath,
       this.modifiedMasterPath,
+      this.renameFiles,
       (progress) => {
         this.exportProgress = progress
         this.emitUpdate()

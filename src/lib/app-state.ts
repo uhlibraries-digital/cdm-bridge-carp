@@ -41,6 +41,7 @@ export interface IAppState {
   readonly accessPath: string
   readonly preservationPath: string
   readonly modifiedMasterPath: string
+  readonly renameFiles: boolean
 }
 
 export interface IArchivesSpace {

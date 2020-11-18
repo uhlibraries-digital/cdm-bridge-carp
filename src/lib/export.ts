@@ -64,6 +64,7 @@ export class Exporter {
   private accessPath: string = ''
   private preservationPath: string = ''
   private modifiedMasterPath: string = ''
+  private renameFiles: boolean = true
 
   public constructor(public cdmServer: CdmServer | null, public aspaceServer: ArchivesSpaceServer | null) {
     this.cdm = new ContentDm(this.cdmServer)
@@ -82,6 +83,7 @@ export class Exporter {
     accessPath: string,
     preservationPath: string,
     modifiedMasterPath: string,
+    renameFiles: boolean,
     progressCallback: (progress: IExportProgress) => void,
     errorCallback: (error: IExportError) => void,
   ): Promise<void> {
@@ -92,6 +94,7 @@ export class Exporter {
     this.accessPath = accessPath
     this.preservationPath = preservationPath
     this.modifiedMasterPath = modifiedMasterPath
+    this.renameFiles = renameFiles
 
     const missing = this._missingFields(fields, crosswalk)
     if (missing) {
@@ -572,8 +575,7 @@ export class Exporter {
     errorCallback: (error: IExportError) => void
   ): Promise<any> {
 
-    const disPurpose = purpose === FilePurpose.Access ? 'access' :
-      purpose === FilePurpose.Preservation ? 'preservation' : ''
+    const disPurpose = this.purposeToString(purpose)
     const f = files.find(file => originalFilename.name === file.name)
     if (!f) {
       errorCallback({
@@ -583,7 +585,9 @@ export class Exporter {
     }
 
     const destPath = `${this.exportLocation}/Files/${containerPath}`
-    const filename = `${padLeft(objectIndex, 4, '0')}_${padLeft(fileIndex, 4, '0')}${filePostfix(purpose)}${f.ext}`
+    const filename = this.renameFiles
+      ? `${padLeft(objectIndex, 4, '0')}_${padLeft(fileIndex, 4, '0')}${filePostfix(purpose)}${f.ext}`
+      : `${f.name}${filePostfix(purpose)}${f.ext}`
 
     await createDirectories(destPath)
 
@@ -805,5 +809,20 @@ export class Exporter {
       return ''
     }
     return fieldType
+  }
+
+  private purposeToString(purpose: FilePurpose): string {
+    switch (purpose) {
+      case FilePurpose.Access:
+        return 'access'
+      case FilePurpose.Preservation:
+        return 'preservation'
+      case FilePurpose.ModifiedMaster:
+        return 'modified master'
+      case FilePurpose.SubmissionDocumentation:
+        return 'submission document'
+    }
+
+    return ''
   }
 }

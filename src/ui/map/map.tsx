@@ -8,6 +8,7 @@ import { IField, ICrosswalkFieldHash, ICrosswalkField } from '../../lib/app-stat
 import { ArchivesSpaceResource } from './archives-space-resource'
 import { Location } from './location'
 import { IResource } from '../../lib/archivesspace';
+import { Checkbox, CheckboxValue } from '../form'
 
 interface IMapProps {
   readonly dispatcher: Dispatcher
@@ -25,6 +26,7 @@ interface IMapState {
   readonly accessPath: string
   readonly preservationPath: string
   readonly modifiedMasterPath: string
+  readonly renameFiles: boolean
 }
 
 export class Map extends React.Component<IMapProps, IMapState> {
@@ -36,7 +38,8 @@ export class Map extends React.Component<IMapProps, IMapState> {
       disabledNicks: [],
       accessPath: '',
       preservationPath: '',
-      modifiedMasterPath: ''
+      modifiedMasterPath: '',
+      renameFiles: true
     }
   }
 
@@ -50,7 +53,8 @@ export class Map extends React.Component<IMapProps, IMapState> {
       this.setState({
         accessPath: '',
         preservationPath: '',
-        modifiedMasterPath: ''
+        modifiedMasterPath: '',
+        renameFiles: true
       })
     }
   }
@@ -253,10 +257,30 @@ export class Map extends React.Component<IMapProps, IMapState> {
     )
   }
 
+  private renderRenameFilesOption() {
+    const check = this.state.renameFiles ? CheckboxValue.On : CheckboxValue.Off
+    return (
+      <Row>
+        <Checkbox
+          label="Rename files during export"
+          value={check}
+          onChange={this.onRenameFilesChange}
+        />
+      </Row>
+    )
+  }
+
+  private onRenameFilesChange = (event: React.FormEvent<HTMLInputElement>) => {
+    const checked = event.currentTarget.checked
+    this.props.dispatcher.setRenameFiles(checked)
+    this.setState({ renameFiles: checked })
+  }
+
   public render() {
     return (
       <div className={this.props.className}>
         {this.renderArchivesSpaceResouces()}
+        {this.renderRenameFilesOption()}
         {this.renderAccessPath()}
         {this.renderPreservationPath()}
         {this.renderModifiedMasterPath()}
