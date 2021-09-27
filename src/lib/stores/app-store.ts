@@ -157,6 +157,12 @@ export class AppStore extends TypedBaseStore<IAppState> {
       this._setMapFields()
       await this._setArchivesSpaceServer()
       this._setArchivesSpaceResources()
+
+      if (!this.preferences.vocabulary) {
+        this.preferences.vocabulary = {
+          url: ''
+        }
+      }
     }
 
     this.sidebarWidth = parseInt(
@@ -378,11 +384,6 @@ export class AppStore extends TypedBaseStore<IAppState> {
   }
 
   public _setPreferencesVocabulary(url: string): Promise<any> {
-    if (!this.preferences.vocabulary) {
-      this.preferences.vocabulary = {
-        url: url
-      }
-    }
     this.preferences.vocabulary.url = url
     electronStore.set('preferences', JSON.stringify(this.preferences))
     return Promise.resolve()

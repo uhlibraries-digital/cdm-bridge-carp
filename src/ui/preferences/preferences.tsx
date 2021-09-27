@@ -46,9 +46,6 @@ export class Preferences extends React.Component<
       this.props.preferences.cdm.port.toString() :
       ''
 
-    const vocabularyUrl = this.props.preferences.vocabulary ?
-      this.props.preferences.vocabulary.url : ''
-
     this.state = {
       selectedIndex: PreferencesTab.ContentDM,
       contentDmHostname: this.props.preferences.cdm.hostname,
@@ -60,7 +57,7 @@ export class Preferences extends React.Component<
       aspacePassword: '',
       exportFields: Array.from(this.props.preferences.fields),
       defaultFields: Array.from(this.props.defaultFields),
-      vocabularyUrl: vocabularyUrl
+      vocabularyUrl: this.props.preferences.vocabulary.url
     }
 
     this.getArchivesSpacePassword(this.props.preferences.aspace.username)
