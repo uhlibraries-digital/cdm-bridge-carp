@@ -1,4 +1,5 @@
 import { CdmServer } from './contentdm'
+import { IVocabulary } from './vocabulary'
 
 export enum PopupType {
   Preferences,
@@ -42,6 +43,7 @@ export interface IAppState {
   readonly preservationPath: string
   readonly modifiedMasterPath: string
   readonly renameFiles: boolean
+  readonly vocabulary: ReadonlyArray<IVocabulary>
 }
 
 export interface IArchivesSpace {
@@ -55,11 +57,16 @@ export interface IExportProgress {
   readonly subdescription?: string
 }
 
+export interface IVocabularyUrl {
+  url: string
+}
+
 export interface IPreferences {
   aspace: IArchivesSpace
   cdm: CdmServer
   fields: ReadonlyArray<IField>
   mapUrl: string
+  vocabulary: IVocabularyUrl
 }
 
 export interface IField {

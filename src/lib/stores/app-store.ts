@@ -13,6 +13,7 @@ import {
   ICrosswalkField,
   IUpdateState
 } from '../app-state'
+import { electronStore } from './electron-store'
 import { TypedBaseStore } from './base-store'
 import { TokenStore } from './token-store'
 import {
@@ -22,13 +23,24 @@ import {
   CdmCollection,
   CdmFieldInfo
 } from '../contentdm'
-import { electronStore } from './electron-store'
-import { ArchivesSpace, IResource, ArchivesSpaceServer } from '../archivesspace'
+import {
+  VocabularyStore
+} from './vocabulary-store'
+import {
+  ArchivesSpace,
+  IResource,
+  ArchivesSpaceServer
+} from '../archivesspace'
 import { Exporter, ExportType } from '../export'
 import { BcdamsMap, BcdamsMapField } from '../map'
 import { remote, ipcRenderer } from 'electron'
-import { ArchivesSpaceStore, IArchivesSpaceStoreState } from './archives-space-store'
-
+import {
+  ArchivesSpaceStore,
+  IArchivesSpaceStoreState
+} from './archives-space-store'
+import {
+  IVocabulary
+} from '../vocabulary'
 
 const defaultSidebarWidth: number = 200
 
@@ -45,7 +57,10 @@ const defaultPreferences: IPreferences = {
     ssl: false
   },
   fields: defaultFields,
-  mapUrl: ''
+  mapUrl: '',
+  vocabulary: {
+    url: ''
+  }
 }
 
 export class AppStore extends TypedBaseStore<IAppState> {
@@ -76,8 +91,10 @@ export class AppStore extends TypedBaseStore<IAppState> {
   private preservationPath: string = ''
   private modifiedMasterPath: string = ''
   private renameFiles: boolean = true
+  private vocabulary: ReadonlyArray<IVocabulary> = []
 
   private readonly archivesSpaceStore: ArchivesSpaceStore
+  private readonly vocabStore: VocabularyStore
 
   public constructor(
     archivesSpaceStore: ArchivesSpaceStore
@@ -85,6 +102,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
     super()
 
     this.archivesSpaceStore = archivesSpaceStore
+    this.vocabStore = new VocabularyStore()
 
     this.wireupStoreEventHandlers()
   }
@@ -92,6 +110,13 @@ export class AppStore extends TypedBaseStore<IAppState> {
   private wireupStoreEventHandlers() {
     this.archivesSpaceStore.onDidUpdate((data) => {
       this.onArchivesSpaceStoreUpdated(data)
+    })
+
+    this.vocabStore.onDidError((err) => {
+      this._pushError(err)
+    })
+    this.vocabStore.onDidUpdate(() => {
+      this.vocabulary = this.vocabStore.getVocabulary()
     })
   }
 
@@ -164,7 +189,8 @@ export class AppStore extends TypedBaseStore<IAppState> {
       accessPath: this.accessPath,
       preservationPath: this.preservationPath,
       modifiedMasterPath: this.modifiedMasterPath,
-      renameFiles: this.renameFiles
+      renameFiles: this.renameFiles,
+      vocabulary: this.vocabulary
     }
   }
 

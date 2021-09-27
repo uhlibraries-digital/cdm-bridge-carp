@@ -12,6 +12,7 @@ import { Fields } from './fields'
 import { IField } from '../../lib/app-state'
 import { sanitizeId } from '../../lib/id-pool'
 import { TokenStore } from '../../lib/stores/token-store'
+import { Vocabulary } from './vocabulary'
 
 interface IPreferencesProps {
   readonly dispatcher: Dispatcher
@@ -31,12 +32,13 @@ interface IPreferencesState {
   readonly aspaceEndpoint: string
   readonly aspaceUsername: string
   readonly aspacePassword: string
+  readonly vocabularyUrl: string
 }
 
 export class Preferences extends React.Component<
   IPreferencesProps,
   IPreferencesState
-  > {
+> {
   public constructor(props: IPreferencesProps) {
     super(props)
 
@@ -54,7 +56,8 @@ export class Preferences extends React.Component<
       aspaceUsername: this.props.preferences.aspace.username,
       aspacePassword: '',
       exportFields: Array.from(this.props.preferences.fields),
-      defaultFields: Array.from(this.props.defaultFields)
+      defaultFields: Array.from(this.props.defaultFields),
+      vocabularyUrl: this.props.preferences.vocabulary.url,
     }
 
     this.getArchivesSpacePassword(this.props.preferences.aspace.username)
@@ -201,6 +204,13 @@ export class Preferences extends React.Component<
             <Button type="submit">Save</Button>
           </ButtonGroup>
         )
+      case PreferencesTab.Vocabulary:
+        return (
+          <ButtonGroup>
+            <Button type="submit">Save</Button>
+            <Button onClick={this.props.onDismissed}>Cancel</Button>
+          </ButtonGroup>
+        )
     }
   }
 
@@ -248,6 +258,13 @@ export class Preferences extends React.Component<
             onFieldRemove={this.onFieldRemove}
           />
         )
+      case PreferencesTab.Vocabulary:
+        return (
+          <Vocabulary
+            vocabularyUrl={this.state.vocabularyUrl}
+            onVocabularyUrlChange={this.onVocabularyUrlChange}
+          />
+        )
     }
   }
 
@@ -265,6 +282,10 @@ export class Preferences extends React.Component<
 
   private onPasswordChanged = (password: string) => {
     this.setState({ aspacePassword: password })
+  }
+
+  private onVocabularyUrlChange = (url: string) => {
+    this.setState({ vocabularyUrl: url })
   }
 
   private async getArchivesSpacePassword(username: string): Promise<any> {
