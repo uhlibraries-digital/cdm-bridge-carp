@@ -46,6 +46,9 @@ export class Preferences extends React.Component<
       this.props.preferences.cdm.port.toString() :
       ''
 
+    const vocabularyUrl = this.props.preferences.vocabulary ?
+      this.props.preferences.vocabulary.url : ''
+
     this.state = {
       selectedIndex: PreferencesTab.ContentDM,
       contentDmHostname: this.props.preferences.cdm.hostname,
@@ -57,7 +60,7 @@ export class Preferences extends React.Component<
       aspacePassword: '',
       exportFields: Array.from(this.props.preferences.fields),
       defaultFields: Array.from(this.props.defaultFields),
-      vocabularyUrl: this.props.preferences.vocabulary.url,
+      vocabularyUrl: vocabularyUrl
     }
 
     this.getArchivesSpacePassword(this.props.preferences.aspace.username)
@@ -77,6 +80,8 @@ export class Preferences extends React.Component<
     )
 
     this.props.dispatcher.setPreferencesMapUrl(this.state.url)
+
+    this.props.dispatcher.setPreferencesVocabulary(this.state.vocabularyUrl)
 
     this.props.onDismissed()
   }
@@ -158,6 +163,7 @@ export class Preferences extends React.Component<
           <span>CONTENTdm</span>
           <span>BCDAMS Map</span>
           <span>ArchivesSpace</span>
+          <span>Vocabulary</span>
         </TabBar>
         {this.renderActiveTab()}
         <DialogFooter>
@@ -269,6 +275,10 @@ export class Preferences extends React.Component<
   }
 
   private onTabClicked = (index: number) => {
+    if (index === 3) { /* Skipping Fields pref since it isn't used */
+      index = 4
+    }
+
     this.setState({ selectedIndex: index })
   }
 

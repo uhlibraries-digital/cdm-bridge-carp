@@ -53,6 +53,10 @@ export class Dispatcher {
     )
   }
 
+  public setPreferencesVocabulary(url: string): Promise<void> {
+    return this.appStore._setPreferencesVocabulary(url)
+  }
+
   public setCollectionFieldInfo(alias: string): Promise<void> {
     return this.appStore._setCollectionFieldInfo(alias)
   }

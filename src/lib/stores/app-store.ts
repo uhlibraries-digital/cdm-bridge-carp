@@ -377,6 +377,12 @@ export class AppStore extends TypedBaseStore<IAppState> {
     return Promise.resolve()
   }
 
+  public _setPreferencesVocabulary(url: string): Promise<any> {
+    this.preferences.vocabulary.url = url
+    electronStore.set('preferences', JSON.stringify(this.preferences))
+    return Promise.resolve()
+  }
+
   private async _setContentDmServer(): Promise<void> {
     this.contentdmServer = {
       hostname: this.preferences.cdm.hostname,
