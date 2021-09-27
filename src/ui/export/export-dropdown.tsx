@@ -2,11 +2,14 @@ import * as React from 'react'
 import * as classNames from 'classnames'
 import { ExportButton } from './export-button'
 import { ExportType } from '../../lib/export'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import * as Icons from "@fortawesome/free-solid-svg-icons"
 
 export type DropdownState = 'open' | 'closed'
 
 interface IExportDropdownProps {
   readonly onSelectExport: (type: ExportType, download?: boolean) => void
+  readonly loadingVocabulary: boolean
   readonly dropdownState: DropdownState
   readonly dropdownStateChanged: (state: DropdownState) => void
   readonly disabled?: boolean
@@ -53,6 +56,7 @@ export class ExportDropdown extends React.Component<IExportDropdownProps, {}> {
         >
           <ExportDropdownList
             onSelectExport={this.props.onSelectExport}
+            loadingVocabulary={this.props.loadingVocabulary}
           />
         </div>
       </div>
@@ -79,6 +83,7 @@ export class ExportDropdown extends React.Component<IExportDropdownProps, {}> {
 
 interface IExportDropdownListProps {
   readonly onSelectExport: (type: ExportType, download?: boolean) => void
+  readonly loadingVocabulary: boolean
 }
 
 export class ExportDropdownList extends React.Component<IExportDropdownListProps, {}> {
@@ -89,6 +94,10 @@ export class ExportDropdownList extends React.Component<IExportDropdownListProps
 
   private onExportCarpProject = (event: React.MouseEvent<HTMLElement>) => {
     this.props.onSelectExport(ExportType.Carp)
+  }
+
+  private onExportVocabReport = (event: React.MouseEvent<HTMLElement>) => {
+    this.props.onSelectExport(ExportType.Vocabulary)
   }
 
   public render() {
@@ -103,6 +112,7 @@ export class ExportDropdownList extends React.Component<IExportDropdownListProps
         >
           Metadata Only
         </div>
+        {this.renderVocabularyReport()}
         <div
           key="carp-project"
           className="export-list-item"
@@ -110,6 +120,40 @@ export class ExportDropdownList extends React.Component<IExportDropdownListProps
         >
           Carpenters Project
         </div>
+      </div>
+    )
+  }
+
+  private renderVocabularyReport() {
+    const loading = this.props.loadingVocabulary
+
+    if (loading) {
+      return (
+        <div
+          key="vocabulary"
+          className="export-list-item"
+          onClick={this.onExportVocabReport}
+        >
+          <div className="text">
+            Vocabulary Report
+          </div>
+          <FontAwesomeIcon
+            className="icon"
+            icon={Icons.faSync}
+            spin={true}
+            size="lg"
+          />
+        </div>
+      )
+    }
+
+    return (
+      <div
+        key="vocabulary"
+        className="export-list-item"
+        onClick={this.onExportVocabReport}
+      >
+        Vocabulary Report
       </div>
     )
   }

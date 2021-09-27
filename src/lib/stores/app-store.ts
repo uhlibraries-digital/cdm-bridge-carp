@@ -92,6 +92,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
   private modifiedMasterPath: string = ''
   private renameFiles: boolean = true
   private vocabulary: ReadonlyArray<IVocabulary> = []
+  private loadingVocabulary: boolean = false
 
   private readonly archivesSpaceStore: ArchivesSpaceStore
   private readonly vocabStore: VocabularyStore
@@ -113,10 +114,13 @@ export class AppStore extends TypedBaseStore<IAppState> {
     })
 
     this.vocabStore.onDidError((err) => {
+      this.loadingVocabulary = false
       this._pushError(err)
     })
     this.vocabStore.onDidUpdate(() => {
+      this.loadingVocabulary = false
       this.vocabulary = this.vocabStore.getVocabulary()
+      this.emitUpdate()
     })
   }
 
@@ -163,6 +167,11 @@ export class AppStore extends TypedBaseStore<IAppState> {
           url: ''
         }
       }
+
+      this.loadingVocabulary = true
+      this.vocabStore.loadVocabulary(this.preferences.vocabulary.url)
+        .catch(e => this._pushError(e))
+      this.vocabulary = this.vocabStore.getVocabulary()
     }
 
     this.sidebarWidth = parseInt(
@@ -196,7 +205,8 @@ export class AppStore extends TypedBaseStore<IAppState> {
       preservationPath: this.preservationPath,
       modifiedMasterPath: this.modifiedMasterPath,
       renameFiles: this.renameFiles,
-      vocabulary: this.vocabulary
+      vocabulary: this.vocabulary,
+      loadingVocabulary: this.loadingVocabulary
     }
   }
 
@@ -522,6 +532,12 @@ export class AppStore extends TypedBaseStore<IAppState> {
   }
 
   public async _export(location: string, type: ExportType, download?: boolean): Promise<void> {
+    if (this.loadingVocabulary && type === ExportType.Vocabulary) {
+      const err = new Error("Vocabulary is still downloading. Please try again later.")
+      this._pushError(err)
+      return Promise.resolve()
+    }
+
     const exporter = new Exporter(this.contentdmServer, this.archivesSpaceServer)
     this.selectedView = ViewType.Export
     this.exportError = []
@@ -592,6 +608,14 @@ export class AppStore extends TypedBaseStore<IAppState> {
         var filters = [
           {
             name: "CSV",
+            extensions: ["csv"]
+          }
+        ]
+      }
+      else if (type === ExportType.Vocabulary) {
+        var filters = [
+          {
+            name: "Vocabulary Report",
             extensions: ["csv"]
           }
         ]

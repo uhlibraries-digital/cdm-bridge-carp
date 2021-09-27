@@ -69,12 +69,24 @@
   .export-list-item {
     cursor: default;
     padding: 5px var(--spacing);
+    display: flex;
+    flex-direction: row;
+    flex: 1;
 
     &:hover {
       --text-color: var(--box-selected-active-text-color);
       --text-secondary-color: var(--box-selected-active-text-color);
       color: var(--text-color);
       background-color: var(--box-selected-active-background-color);
+    }
+
+    .text {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      min-width: 0;
+      margin-right: var(--spacing);
+      position: relative;
     }
   }
 }

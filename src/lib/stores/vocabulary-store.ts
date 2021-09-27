@@ -52,7 +52,7 @@ export class VocabularyStore extends BaseStore {
         nodes: range
       })
       this.ranges = newRanges
-      resolve()
+      resolve(null)
     })
   }
 

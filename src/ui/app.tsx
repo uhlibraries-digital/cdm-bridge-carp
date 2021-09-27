@@ -261,6 +261,7 @@ export class App extends React.Component<IAppProps, IAppState> {
             dropdownState={currentState}
             dropdownStateChanged={this.onExportDropdownChanged}
             onSelectExport={this.onSelectExport}
+            loadingVocabulary={this.state.loadingVocabulary}
           />
         </TitleBar>
         {this.renderUpdateBanner()}

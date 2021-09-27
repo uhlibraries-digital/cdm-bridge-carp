@@ -44,6 +44,7 @@ export interface IAppState {
   readonly modifiedMasterPath: string
   readonly renameFiles: boolean
   readonly vocabulary: ReadonlyArray<IVocabulary>
+  readonly loadingVocabulary: boolean
 }
 
 export interface IArchivesSpace {

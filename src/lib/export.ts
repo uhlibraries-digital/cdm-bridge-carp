@@ -41,7 +41,8 @@ const __DEV__ = process.env.NODE_ENV === 'development'
 
 export enum ExportType {
   Carp,
-  Metadata
+  Metadata,
+  Vocabulary
 }
 
 export interface IFileProgress {
