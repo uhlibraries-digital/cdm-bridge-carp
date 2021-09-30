@@ -563,6 +563,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
       this.preservationPath,
       this.modifiedMasterPath,
       this.renameFiles,
+      this.vocabulary,
       (progress) => {
         this.exportProgress = progress
         this.emitUpdate()

@@ -36,13 +36,22 @@ import {
 } from './archivesspace'
 import { padLeft } from './string'
 import * as filesize from 'filesize'
+import { IVocabulary } from './vocabulary'
+import { findBestMatch } from 'string-similarity'
 
-const __DEV__ = process.env.NODE_ENV === 'development'
+const fieldDelemiter = '; '
 
 export enum ExportType {
   Carp,
   Metadata,
   Vocabulary
+}
+
+export interface IVocabularyReportField {
+  contributor: Array<Array<string>>
+  creator: Array<Array<string>>
+  publisher: Array<Array<string>>
+  subject: Array<Array<string>>
 }
 
 export interface IFileProgress {
@@ -66,6 +75,7 @@ export class Exporter {
   private preservationPath: string = ''
   private modifiedMasterPath: string = ''
   private renameFiles: boolean = true
+  private vocabulary: ReadonlyArray<IVocabulary> = []
 
   public constructor(public cdmServer: CdmServer | null, public aspaceServer: ArchivesSpaceServer | null) {
     this.cdm = new ContentDm(this.cdmServer)
@@ -85,6 +95,7 @@ export class Exporter {
     preservationPath: string,
     modifiedMasterPath: string,
     renameFiles: boolean,
+    vocabulary: ReadonlyArray<IVocabulary>,
     progressCallback: (progress: IExportProgress) => void,
     errorCallback: (error: IExportError) => void,
   ): Promise<void> {
@@ -96,6 +107,7 @@ export class Exporter {
     this.preservationPath = preservationPath
     this.modifiedMasterPath = modifiedMasterPath
     this.renameFiles = renameFiles
+    this.vocabulary = vocabulary
 
     const missing = this._missingFields(fields, crosswalk)
     if (missing) {
@@ -323,10 +335,6 @@ export class Exporter {
         await exportStream.write(csvData)
         csvItems = []
       }
-
-      if (__DEV__) {
-        console.log(`heapTotal: ${Math.round(process.memoryUsage().heapTotal / 1e6)}MB, heapUsed: ${Math.round(process.memoryUsage().heapUsed / 1e6)}MB`)
-      }
     }
 
     if (type === ExportType.Carp) {
@@ -343,6 +351,13 @@ export class Exporter {
       })
       await createContainerFilesystem(this.exportLocation, project.objects)
       await exportStream.write(JSON.stringify(project))
+    }
+    else if (type === ExportType.Vocabulary) {
+      await this._processVocabularyReport(
+        items,
+        exportStream,
+        progressCallback
+      )
     }
 
   }
@@ -825,5 +840,96 @@ export class Exporter {
     }
 
     return ''
+  }
+
+  private async _processVocabularyReport(
+    items: any,
+    exportStream: WriteStream,
+    progressCallback: (progress: IExportProgress) => void
+  ): Promise<void> {
+    progressCallback({
+      value: undefined,
+      description: "Exporting vocabulary report"
+    })
+    const prefLabels = this.vocabulary.map((vocab) => {
+      return vocab.prefLabel
+    })
+
+    let count = 0
+    let csvItem = [['Field', 'Source Value', 'Exact Match Value', 'Best Match Value', 'Best Match Rating']]
+    let fieldData: IVocabularyReportField = {
+      contributor: [],
+      publisher: [],
+      subject: [],
+      creator: []
+    }
+
+    for (let item of items) {
+      const progressValue = (count + items.length / items.length * 2)
+      progressCallback({
+        value: progressValue,
+        description: `Building vocabulary report for item ${++count} of ${items.length}`
+      })
+      this._getVocabularyReportRow('Subject', item.fieldValues['dcterms.subject'], fieldData.subject, prefLabels)
+      this._getVocabularyReportRow('Contributor', item.fieldValues['dcterms.contributor'], fieldData.contributor, prefLabels)
+      this._getVocabularyReportRow('Creator', item.fieldValues['dcterms.creator'], fieldData.creator, prefLabels)
+      this._getVocabularyReportRow('Publisher', item.fieldValues['dcterms.publisher'], fieldData.publisher, prefLabels)
+    }
+
+    progressCallback({
+      value: undefined,
+      description: "Creating vocabulary report csv"
+    })
+    csvItem = csvItem.concat(
+      this._sortVocabularyReportFields(fieldData.contributor),
+      this._sortVocabularyReportFields(fieldData.creator),
+      this._sortVocabularyReportFields(fieldData.publisher),
+      this._sortVocabularyReportFields(fieldData.subject)
+    )
+    const csvData = await csvString(csvItem)
+    await exportStream.write(csvData)
+
+  }
+
+  private _getVocabularyReportRow(
+    field: string,
+    value: string,
+    fieldData: Array<Array<string>>,
+    prefLabels: Array<string>
+  ) {
+    if (value === '') {
+      return
+    }
+
+    const values = value.split(fieldDelemiter)
+
+    for (let v of values) {
+      v = v.trim()
+      const exists = fieldData.filter((f: any) => {
+        return f[1] === v
+      }).length > 0
+
+      if (exists) {
+        continue
+      }
+
+      const match = prefLabels.indexOf(v) > -1
+      if (match) {
+        fieldData.push([field, v, v, '', ''])
+      }
+      else {
+        const bestMatch = findBestMatch(v, prefLabels)
+        const rating = (bestMatch.bestMatch.rating * 100).toFixed(3)
+        fieldData.push([field, v, '', bestMatch.bestMatch.target, `${rating}%`])
+      }
+    }
+
+  }
+
+  private _sortVocabularyReportFields(s: Array<Array<string>>): Array<Array<string>> {
+    s.sort((a, b) => {
+      return a[1].localeCompare(b[1])
+    })
+    return s
   }
 }
