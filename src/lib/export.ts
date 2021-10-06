@@ -977,7 +977,7 @@ export class Exporter {
 
   private _sortVocabularyReportFields(s: Array<Array<string>>): Array<Array<string>> {
     s.sort((a, b) => {
-      return a[1].localeCompare(b[1])
+      return a[2].localeCompare(b[2])
     })
     return s
   }
