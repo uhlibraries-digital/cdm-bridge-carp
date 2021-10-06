@@ -266,7 +266,8 @@ export class Exporter {
     let mapItem: any = {
       values: [],
       fieldValues: {},
-      files: item.files
+      files: item.files,
+      cdm: item
     }
     for (let field of fields) {
       const nicks = this.exportCrosswalk[field.id] ?
@@ -863,7 +864,8 @@ export class Exporter {
 
     let count = 0
     let csvItem = [[
-      'Field',
+      'Source Field',
+      'Target Field',
       'Source Value',
       'Exact Match Value',
       'Best Match Value',
@@ -889,14 +891,14 @@ export class Exporter {
         value: progressValue,
         description: `Building vocabulary report for item ${++count} of ${items.length}`
       })
-      this._getVocabularyReportRow('Subject', item.fieldValues['dcterms.subject'], fieldData.subject, prefLabels)
-      this._getVocabularyReportRow('Contributor', item.fieldValues['dcterms.contributor'], fieldData.contributor, prefLabels)
-      this._getVocabularyReportRow('Creator', item.fieldValues['dcterms.creator'], fieldData.creator, prefLabels)
-      this._getVocabularyReportRow('Publisher', item.fieldValues['dcterms.publisher'], fieldData.publisher, prefLabels)
-      this._getVocabularyReportRow('Creator', item.fieldValues['dcterms.creator'], fieldData.creator, prefLabels)
-      this._getVocabularyReportRow('Donor', item.fieldValues['relators.donor'], fieldData.donor, prefLabels)
-      this._getVocabularyReportRow('Place', item.fieldValues['dcterms.spatial'], fieldData.place, prefLabels)
-      this._getVocabularyReportRow('Time Period', item.fieldValues['dcterms.temporal'], fieldData.period, prefLabels)
+      this._getVocabularyReportRow('Subject', 'dcterms.subject', item, fieldData.subject, prefLabels)
+      this._getVocabularyReportRow('Contributor', 'dcterms.contributor', item, fieldData.contributor, prefLabels)
+      this._getVocabularyReportRow('Creator', 'dcterms.creator', item, fieldData.creator, prefLabels)
+      this._getVocabularyReportRow('Publisher', 'dcterms.publisher', item, fieldData.publisher, prefLabels)
+      this._getVocabularyReportRow('Creator', 'dcterms.creator', item, fieldData.creator, prefLabels)
+      this._getVocabularyReportRow('Donor', 'relators.donor', item, fieldData.donor, prefLabels)
+      this._getVocabularyReportRow('Place', 'dcterms.spatial', item, fieldData.place, prefLabels)
+      this._getVocabularyReportRow('Time Period', 'dcterms.temporal', item, fieldData.period, prefLabels)
     }
 
     progressCallback({
@@ -918,11 +920,13 @@ export class Exporter {
   }
 
   private _getVocabularyReportRow(
-    field: string,
-    value: string,
+    fieldName: string,
+    fieldLabel: string,
+    item: any,
     fieldData: Array<Array<string>>,
     prefLabels: Array<string>
   ) {
+    const value = item.fieldValues[fieldLabel]
     if (value === '') {
       return
     }
@@ -932,16 +936,18 @@ export class Exporter {
     for (let v of values) {
       v = v.trim()
       const exists = fieldData.filter((f: any) => {
-        return f[1] === v
+        return f[2] === v
       }).length > 0
 
       if (exists) {
         continue
       }
 
+      const cdmField = this._cdmFieldByValue(v, fieldLabel, item)
+
       const match = prefLabels.indexOf(v) > -1
       if (match) {
-        fieldData.push([field, v, v, '', '', '', '', '', ''])
+        fieldData.push([cdmField, fieldName, v, v, '', '', '', '', '', ''])
       }
       else {
         const bestMatch = findBestMatch(v, prefLabels)
@@ -952,9 +958,9 @@ export class Exporter {
         const tertiaryMatch = runnerUpMatch[1]
         const tertiaryRating = (tertiaryMatch.rating * 100).toFixed(3)
 
-        console.log('best match', bestMatch)
         fieldData.push([
-          field,
+          cdmField,
+          fieldName,
           v,
           '',
           bestMatch.bestMatch.target,
@@ -981,5 +987,17 @@ export class Exporter {
       return b.rating - a.rating
     })
     return Array(ratings[1], ratings[2])
+  }
+
+  private _cdmFieldByValue(value: string, field: string, item: any): string {
+    const nicks = this.exportCrosswalk[field].nicks
+    for (let nick of nicks) {
+      const values = String(item.cdm[nick]).split(fieldDelemiter).map((v: string) => v.trim())
+      if (values.indexOf(value) > -1) {
+        const fieldInfo = this.collectionFieldInfo.find((f: any) => f.nick === nick)
+        return fieldInfo.name
+      }
+    }
+    return 'UNKNOWN'
   }
 }
