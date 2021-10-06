@@ -37,7 +37,10 @@ import {
 import { padLeft } from './string'
 import * as filesize from 'filesize'
 import { IVocabulary } from './vocabulary'
-import { findBestMatch } from 'string-similarity'
+import {
+  findBestMatch,
+  Rating
+} from 'string-similarity'
 
 const fieldDelemiter = '; '
 
@@ -859,7 +862,17 @@ export class Exporter {
     })
 
     let count = 0
-    let csvItem = [['Field', 'Source Value', 'Exact Match Value', 'Best Match Value', 'Best Match Rating']]
+    let csvItem = [[
+      'Field',
+      'Source Value',
+      'Exact Match Value',
+      'Best Match Value',
+      'Best Match Rating',
+      'Secondary Match Value',
+      'Secondary Match Rating',
+      'Tertiary Match Value',
+      'Tertiary Match Rating'
+    ]]
     let fieldData: IVocabularyReportField = {
       contributor: [],
       publisher: [],
@@ -928,12 +941,29 @@ export class Exporter {
 
       const match = prefLabels.indexOf(v) > -1
       if (match) {
-        fieldData.push([field, v, v, '', ''])
+        fieldData.push([field, v, v, '', '', '', '', '', ''])
       }
       else {
         const bestMatch = findBestMatch(v, prefLabels)
         const rating = (bestMatch.bestMatch.rating * 100).toFixed(3)
-        fieldData.push([field, v, '', bestMatch.bestMatch.target, `${rating}%`])
+        const runnerUpMatch = this._findRunnerUpMatch(bestMatch.ratings)
+        const secondaryMatch = runnerUpMatch[0]
+        const secondaryRating = (secondaryMatch.rating * 100).toFixed(3)
+        const tertiaryMatch = runnerUpMatch[1]
+        const tertiaryRating = (tertiaryMatch.rating * 100).toFixed(3)
+
+        console.log('best match', bestMatch)
+        fieldData.push([
+          field,
+          v,
+          '',
+          bestMatch.bestMatch.target,
+          `${rating}%`,
+          secondaryMatch.target,
+          `${secondaryRating}%`,
+          tertiaryMatch.target,
+          `${tertiaryRating}%`
+        ])
       }
     }
 
@@ -944,5 +974,12 @@ export class Exporter {
       return a[1].localeCompare(b[1])
     })
     return s
+  }
+
+  private _findRunnerUpMatch(ratings: Array<Rating>): Array<Rating> {
+    ratings.sort((a, b) => {
+      return b.rating - a.rating
+    })
+    return Array(ratings[1], ratings[2])
   }
 }
