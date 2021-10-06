@@ -52,6 +52,9 @@ export interface IVocabularyReportField {
   creator: Array<Array<string>>
   publisher: Array<Array<string>>
   subject: Array<Array<string>>
+  donor: Array<Array<string>>
+  place: Array<Array<string>>
+  period: Array<Array<string>>
 }
 
 export interface IFileProgress {
@@ -861,11 +864,14 @@ export class Exporter {
       contributor: [],
       publisher: [],
       subject: [],
-      creator: []
+      creator: [],
+      donor: [],
+      place: [],
+      period: []
     }
 
     for (let item of items) {
-      const progressValue = (count + items.length / items.length * 2)
+      const progressValue = (count + items.length) / (items.length * 2)
       progressCallback({
         value: progressValue,
         description: `Building vocabulary report for item ${++count} of ${items.length}`
@@ -874,6 +880,10 @@ export class Exporter {
       this._getVocabularyReportRow('Contributor', item.fieldValues['dcterms.contributor'], fieldData.contributor, prefLabels)
       this._getVocabularyReportRow('Creator', item.fieldValues['dcterms.creator'], fieldData.creator, prefLabels)
       this._getVocabularyReportRow('Publisher', item.fieldValues['dcterms.publisher'], fieldData.publisher, prefLabels)
+      this._getVocabularyReportRow('Creator', item.fieldValues['dcterms.creator'], fieldData.creator, prefLabels)
+      this._getVocabularyReportRow('Donor', item.fieldValues['relators.donor'], fieldData.donor, prefLabels)
+      this._getVocabularyReportRow('Place', item.fieldValues['dcterms.spatial'], fieldData.place, prefLabels)
+      this._getVocabularyReportRow('Time Period', item.fieldValues['dcterms.temporal'], fieldData.period, prefLabels)
     }
 
     progressCallback({
@@ -881,8 +891,11 @@ export class Exporter {
       description: "Creating vocabulary report csv"
     })
     csvItem = csvItem.concat(
+      this._sortVocabularyReportFields(fieldData.donor),
       this._sortVocabularyReportFields(fieldData.contributor),
       this._sortVocabularyReportFields(fieldData.creator),
+      this._sortVocabularyReportFields(fieldData.period),
+      this._sortVocabularyReportFields(fieldData.place),
       this._sortVocabularyReportFields(fieldData.publisher),
       this._sortVocabularyReportFields(fieldData.subject)
     )
