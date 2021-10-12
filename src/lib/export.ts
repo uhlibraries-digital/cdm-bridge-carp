@@ -905,15 +905,15 @@ export class Exporter {
       value: undefined,
       description: "Creating vocabulary report csv"
     })
-    csvItem = csvItem.concat(
-      this._sortVocabularyReportFields(fieldData.donor),
-      this._sortVocabularyReportFields(fieldData.contributor),
-      this._sortVocabularyReportFields(fieldData.creator),
-      this._sortVocabularyReportFields(fieldData.period),
-      this._sortVocabularyReportFields(fieldData.place),
-      this._sortVocabularyReportFields(fieldData.publisher),
-      this._sortVocabularyReportFields(fieldData.subject)
-    )
+    csvItem = csvItem.concat(this._sortVocabularyReportFields(
+      fieldData.donor.concat(
+        fieldData.contributor,
+        fieldData.creator,
+        fieldData.period,
+        fieldData.place,
+        fieldData.publisher,
+        fieldData.subject
+      )))
     const csvData = await csvString(csvItem)
     await exportStream.write(csvData)
 
