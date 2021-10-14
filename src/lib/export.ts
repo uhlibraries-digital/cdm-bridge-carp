@@ -360,6 +360,11 @@ export class Exporter {
       await exportStream.write(JSON.stringify(project))
     }
     else if (type === ExportType.Vocabulary) {
+      progressCallback({
+        value: undefined,
+        description: "Exporting vocabulary report"
+      })
+      await this.sleep(10)
       await this._processVocabularyReport(
         items,
         exportStream,
@@ -854,10 +859,6 @@ export class Exporter {
     exportStream: WriteStream,
     progressCallback: (progress: IExportProgress) => void
   ): Promise<void> {
-    progressCallback({
-      value: undefined,
-      description: "Exporting vocabulary report"
-    })
     const prefLabels = this.vocabulary.map((vocab) => {
       return vocab.prefLabel
     })
@@ -891,6 +892,7 @@ export class Exporter {
         value: progressValue,
         description: `Building vocabulary report for item ${++count} of ${items.length}`
       })
+      await this.sleep(5)
       this._getVocabularyReportRow('Subject', 'dcterms.subject', item, fieldData.subject, prefLabels)
       this._getVocabularyReportRow('Contributor', 'dcterms.contributor', item, fieldData.contributor, prefLabels)
       this._getVocabularyReportRow('Creator', 'dcterms.creator', item, fieldData.creator, prefLabels)
@@ -999,5 +1001,9 @@ export class Exporter {
       }
     }
     return 'UNKNOWN'
+  }
+
+  private async sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 }
