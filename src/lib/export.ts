@@ -941,7 +941,7 @@ export class Exporter {
         return f[2] === v
       }).length > 0
 
-      if (exists) {
+      if (exists || v === '') {
         continue
       }
 
