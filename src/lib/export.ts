@@ -730,7 +730,7 @@ export class Exporter {
 
     const date = this.toLocalDateString()
     const alias = this.exportAlias.replace('/', '')
-    const outputLocation = `${this.exportLocation}/missed_files_${alias}_${date}.txt`
+    const outputLocation = `${this.exportLocation}/extra_files_${alias}_${date}.txt`
     const outputAccess = access.map(a => `${this.accessPath}/${a.filename}`)
     const outputPreservation = preservation.map(p => `${this.preservationPath}/${p.filename}`)
     const outputModifiedMaster = modifiedMaster.map(m => `${this.modifiedMasterPath}/${m.filename}`)
