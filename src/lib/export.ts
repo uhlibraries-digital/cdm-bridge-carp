@@ -34,7 +34,10 @@ import {
   ArchivesSpace,
   ArchivesSpaceServer
 } from './archivesspace'
-import { padLeft } from './string'
+import {
+  padLeft,
+  capitalize
+} from './string'
 import * as filesize from 'filesize'
 import { IVocabulary } from './vocabulary'
 import {
@@ -510,11 +513,11 @@ export class Exporter {
     const top_container = await this.aspace.getTopContainer(container.top_container.ref)
     const objectContainer: IContainer = {
       top_container: container.top_container.ref,
-      type_1: top_container.type,
+      type_1: capitalize(top_container.type),
       indicator_1: top_container.indicator,
-      type_2: container.type_2,
+      type_2: capitalize(container.type_2),
       indicator_2: container.indicator_2,
-      type_3: container.type_3,
+      type_3: capitalize(container.type_3),
       indicator_3: container.indicator_3
     }
 
