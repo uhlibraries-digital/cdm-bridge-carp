@@ -117,11 +117,11 @@ export async function createDirectories(
     access(path, constants.F_OK, (err) => {
       if (err) {
         mkdirp(path, (err) => {
-          return err ? reject(err) : resolve()
+          return err ? reject(err) : resolve(null)
         })
       }
       else {
-        return resolve()
+        return resolve(null)
       }
     })
   })
@@ -163,7 +163,7 @@ export async function copyFileToProject(
       if (err) {
         return reject(err)
       }
-      resolve()
+      resolve(null)
     })
   })
 }
