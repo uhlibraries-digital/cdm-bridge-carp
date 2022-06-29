@@ -5,21 +5,34 @@ import {
   IVocabularyMapRange
 } from '../vocabulary'
 import { electronStore } from './electron-store'
+import { sleep } from '../sleep'
 
 export class VocabularyStore extends BaseStore {
 
   private ranges: ReadonlyArray<IVocabularyMapRange> = []
 
-  public async loadVocabulary(url: string): Promise<any> {
+  public async loadVocabulary(url: string, wait: boolean = false): Promise<any> {
     if (!url) {
       return Promise.reject(new Error('No vocabulary url set. Please check preferences.'))
     }
 
-    return rp(url)
-      .then((body) => {
-        const vocab = this.parse(body)
-        electronStore.set('vocabulary', JSON.stringify(vocab))
-        this.emitUpdate()
+    if (wait) {
+      await sleep(10000)
+    }
+
+    return rp({
+      url: url,
+      resolveWithFullResponse: true
+    })
+      .then((response) => {
+        if (response.statusCode === 202) {
+          this.loadVocabulary(url, true)
+        }
+        else {
+          const vocab = this.parse(response.body)
+          electronStore.set('vocabulary', JSON.stringify(vocab))
+          this.emitUpdate()
+        }
       })
       .catch((err) => {
         const error = err.statusCode || err.message || err
