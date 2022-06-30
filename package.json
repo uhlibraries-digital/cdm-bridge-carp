@@ -22,8 +22,7 @@
     "productName": "CDM Bridge2Carp",
     "appId": "edu.uh.lib.Cdm2Carp",
     "dmg": {
-      "contents": [
-        {
+      "contents": [{
           "x": 130,
           "y": 220
         },
@@ -91,7 +90,7 @@
     "@types/string-similarity": "^4.0.0",
     "@types/uuid": "^3.4.3",
     "electron": "7.2.4",
-    "electron-builder": "^22.4.1",
+    "electron-builder": "^23.0.3",
     "electron-devtools-installer": "^3.0.0",
     "electron-rebuild": "^1.8.8",
     "electron-webpack": "^2.8.2",
